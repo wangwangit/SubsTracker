@@ -24,7 +24,7 @@ jobs:
           echo 'workers_dev = true' >> wrangler.toml
           echo '' >> wrangler.toml
           echo '[[kv_namespaces]]' >> wrangler.toml
-          echo 'binding = "SUBS_KV"' >> wrangler.toml
+          echo 'binding = "SUBSCRIPTIONS_KV"' >> wrangler.toml
           echo 'id = "${{ secrets.KV_ID }}"' >> wrangler.toml
 
       - name: Deploy to Cloudflare
