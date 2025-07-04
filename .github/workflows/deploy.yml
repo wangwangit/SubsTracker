@@ -1,4 +1,3 @@
-
 name: Deploy SubsTracker to Cloudflare Workers
 
 on:
@@ -19,7 +18,8 @@ jobs:
       - name: Write wrangler.toml
         run: |
           echo 'name = "substracker"' > wrangler.toml
-          echo 'type = "javascript"' >> wrangler.toml
+          echo 'main = "index_v3.js"' >> wrangler.toml
+          echo "compatibility_date = \"$(date +%F)\"" >> wrangler.toml
           echo 'account_id = "${{ secrets.CF_ACCOUNT_ID }}"' >> wrangler.toml
           echo 'workers_dev = true' >> wrangler.toml
           echo '' >> wrangler.toml
@@ -27,7 +27,7 @@ jobs:
           echo 'binding = "SUBS_KV"' >> wrangler.toml
           echo 'id = "${{ secrets.KV_ID }}"' >> wrangler.toml
 
-      - name: Publish to Cloudflare
+      - name: Deploy to Cloudflare
         run: wrangler deploy
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
