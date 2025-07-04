@@ -28,6 +28,6 @@ jobs:
           echo 'id = "${{ secrets.KV_ID }}"' >> wrangler.toml
 
       - name: Publish to Cloudflare
-        run: wrangler publish
+        run: wrangler deploy
         env:
           CF_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
