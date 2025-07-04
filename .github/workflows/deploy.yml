@@ -1,1 +1,33 @@
 
+name: Deploy SubsTracker to Cloudflare Workers
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [master]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Install Wrangler
+        run: npm install -g wrangler
+
+      - name: Write wrangler.toml
+        run: |
+          echo 'name = "substracker"' > wrangler.toml
+          echo 'type = "javascript"' >> wrangler.toml
+          echo 'account_id = "${{ secrets.CF_ACCOUNT_ID }}"' >> wrangler.toml
+          echo 'workers_dev = true' >> wrangler.toml
+          echo '' >> wrangler.toml
+          echo '[[kv_namespaces]]' >> wrangler.toml
+          echo 'binding = "SUBS_KV"' >> wrangler.toml
+          echo 'id = "${{ secrets.KV_ID }}"' >> wrangler.toml
+
+      - name: Publish to Cloudflare
+        run: wrangler publish
+        env:
+          CF_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
