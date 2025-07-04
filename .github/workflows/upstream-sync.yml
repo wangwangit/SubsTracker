@@ -1,0 +1,34 @@
+name: Upstream Sync
+
+permissions:
+  contents: write
+
+on:
+  schedule:
+    - cron: "0 0 * * *"  # 每天0点自动同步
+  workflow_dispatch:
+
+jobs:
+  sync_latest_from_upstream:
+    name: Sync latest commits from upstream repo
+    runs-on: ubuntu-latest
+    if: ${{ github.event.repository.fork }}
+
+    steps:
+      - name: Checkout target repo
+        uses: actions/checkout@v3
+
+      - name: Sync upstream changes
+        id: sync
+        uses: aormsby/Fork-Sync-With-Upstream-action@v3.4
+        with:
+          upstream_sync_repo: wangwangit/SubsTracker  # 你的上游仓库
+          upstream_sync_branch: master               # 上游默认分支
+          target_sync_branch: master                 # 你的默认分支
+          target_repo_token: ${{ secrets.GITHUB_TOKEN }} # 默认自动生成，无需额外设置
+
+      - name: Sync check
+        if: failure()
+        run: |
+          echo "[Error] 因为上游仓库 workflow 文件变更导致自动更新被暂停，请手动同步 Fork"
+          exit 1
