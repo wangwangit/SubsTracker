@@ -161,6 +161,78 @@ const lunarCalendar = {
   }
 };
 
+// 1. 新增 lunarBiz 工具模块，支持农历加周期、农历转公历、农历距离天数
+const lunarBiz = {
+  // 农历加周期，返回新的农历日期对象
+  addLunarPeriod(lunar, periodValue, periodUnit) {
+    let { year, month, day, isLeap } = lunar;
+    if (periodUnit === 'year') {
+      year += periodValue;
+      const leap = lunarCalendar.leapMonth(year);
+      if (isLeap && leap === month) {
+        isLeap = true;
+      } else {
+        isLeap = false;
+      }
+    } else if (periodUnit === 'month') {
+      let totalMonths = (year - 1900) * 12 + (month - 1) + periodValue;
+      year = Math.floor(totalMonths / 12) + 1900;
+      month = (totalMonths % 12) + 1;
+      const leap = lunarCalendar.leapMonth(year);
+      if (isLeap && leap === month) {
+        isLeap = true;
+      } else {
+        isLeap = false;
+      }
+    } else if (periodUnit === 'day') {
+      const solar = lunarBiz.lunar2solar(lunar);
+      const date = new Date(solar.year, solar.month - 1, solar.day + periodValue);
+      return lunarCalendar.solar2lunar(date.getFullYear(), date.getMonth() + 1, date.getDate());
+    }
+    let maxDay = isLeap
+      ? lunarCalendar.leapDays(year)
+      : lunarCalendar.monthDays(year, month);
+    let targetDay = Math.min(day, maxDay);
+    while (targetDay > 0) {
+      let solar = lunarBiz.lunar2solar({ year, month, day: targetDay, isLeap });
+      if (solar) {
+        return { year, month, day: targetDay, isLeap };
+      }
+      targetDay--;
+    }
+    return { year, month, day, isLeap };
+  },
+  // 农历转公历（遍历法，适用1900-2100年）
+  lunar2solar(lunar) {
+    for (let y = lunar.year - 1; y <= lunar.year + 1; y++) {
+      for (let m = 1; m <= 12; m++) {
+        for (let d = 1; d <= 31; d++) {
+          const date = new Date(y, m - 1, d);
+          if (date.getFullYear() !== y || date.getMonth() + 1 !== m || date.getDate() !== d) continue;
+          const l = lunarCalendar.solar2lunar(y, m, d);
+          if (
+            l &&
+            l.year === lunar.year &&
+            l.month === lunar.month &&
+            l.day === lunar.day &&
+            l.isLeap === lunar.isLeap
+          ) {
+            return { year: y, month: m, day: d };
+          }
+        }
+      }
+    }
+    return null;
+  },
+  // 距离农历日期还有多少天
+  daysToLunar(lunar) {
+    const solar = lunarBiz.lunar2solar(lunar);
+    const date = new Date(solar.year, solar.month - 1, solar.day);
+    const now = new Date();
+    return Math.ceil((date - now) / (1000 * 60 * 60 * 24));
+  }
+};
+
 // 定义HTML模板
 const loginPage = `
 <!DOCTYPE html>
@@ -603,6 +675,13 @@ const adminPage = `
             <span class="text-gray-700">显示农历日期</span>
           </label>
         </div>
+		<!-- 新增修改，在表单添加"周期按农历"复选框，建议放在"显示农历日期"下方 -->
+		<div class="mb-4">
+		  <label class="lunar-toggle">
+			<input type="checkbox" id="useLunar" class="form-checkbox h-4 w-4 text-indigo-600">
+			<span class="text-gray-700">周期按农历</span>
+		  </label>
+		</div>
 
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div>
@@ -857,6 +936,72 @@ const adminPage = `
         };
       }
     };
+	
+
+// 新增修改，农历转公历（简化，适用1900-2100年）
+function lunar2solar(lunar) {
+  for (let y = lunar.year - 1; y <= lunar.year + 1; y++) {
+    for (let m = 1; m <= 12; m++) {
+      for (let d = 1; d <= 31; d++) {
+        const date = new Date(y, m - 1, d);
+        if (date.getFullYear() !== y || date.getMonth() + 1 !== m || date.getDate() !== d) continue;
+        const l = lunarCalendar.solar2lunar(y, m, d);
+        if (
+          l &&
+          l.year === lunar.year &&
+          l.month === lunar.month &&
+          l.day === lunar.day &&
+          l.isLeap === lunar.isLeap
+        ) {
+          return { year: y, month: m, day: d };
+        }
+      }
+    }
+  }
+  return null;
+}
+
+// 新增修改，农历加周期，前期版本
+function addLunarPeriod(lunar, periodValue, periodUnit) {
+  let { year, month, day, isLeap } = lunar;
+  if (periodUnit === 'year') {
+    year += periodValue;
+    const leap = lunarCalendar.leapMonth(year);
+    if (isLeap && leap === month) {
+      isLeap = true;
+    } else {
+      isLeap = false;
+    }
+  } else if (periodUnit === 'month') {
+    let totalMonths = (year - 1900) * 12 + (month - 1) + periodValue;
+    year = Math.floor(totalMonths / 12) + 1900;
+    month = (totalMonths % 12) + 1;
+    const leap = lunarCalendar.leapMonth(year);
+    if (isLeap && leap === month) {
+      isLeap = true;
+    } else {
+      isLeap = false;
+    }
+  } else if (periodUnit === 'day') {
+    const solar = lunar2solar(lunar);
+    const date = new Date(solar.year, solar.month - 1, solar.day + periodValue);
+    return lunarCalendar.solar2lunar(date.getFullYear(), date.getMonth() + 1, date.getDate());
+  }
+  let maxDay = isLeap
+    ? lunarCalendar.leapDays(year)
+    : lunarCalendar.monthDays(year, month);
+  let targetDay = Math.min(day, maxDay);
+  while (targetDay > 0) {
+    let solar = lunar2solar({ year, month, day: targetDay, isLeap });
+    if (solar) {
+      return { year, month, day: targetDay, isLeap };
+    }
+    targetDay--;
+  }
+  return { year, month, day, isLeap };
+}
+
+
 
     // 农历显示相关函数
     function updateLunarDisplay(dateInputId, lunarDisplayId) {
@@ -1025,10 +1170,19 @@ const adminPage = `
         // 按到期时间升序排序（最早到期的在前）
         data.sort((a, b) => new Date(a.expiryDate) - new Date(b.expiryDate));
         
+		//新增修改，添加日历类型
         data.forEach(subscription => {
           const row = document.createElement('tr');
           row.className = subscription.isActive === false ? 'hover:bg-gray-50 bg-gray-100' : 'hover:bg-gray-50';
           
+		  // 新增修改：日历类型显示
+		  let calendarTypeHtml = '';
+		  if (subscription.useLunar) {
+			calendarTypeHtml = '<div class="text-xs text-purple-600 mt-1">日历类型：农历</div>';
+		  } else {
+			calendarTypeHtml = '<div class="text-xs text-gray-600 mt-1">日历类型：公历</div>';
+		  }
+		  
           const expiryDate = new Date(subscription.expiryDate);
           const now = new Date();
           const daysDiff = Math.ceil((expiryDate - now) / (1000 * 60 * 60 * 24));
@@ -1089,10 +1243,10 @@ const adminPage = `
             }
           }
 
-          // 生成各列内容
-          const nameHtml = createHoverText(subscription.name, 20, 'text-sm font-medium text-gray-900');
-          const typeHtml = createHoverText((subscription.customType || '其他'), 15, 'text-sm text-gray-900');
-          const periodHtml = periodText ? createHoverText('周期: ' + periodText, 20, 'text-xs text-gray-500 mt-1') : '';
+		  // 生成各列内容
+		  const nameHtml = createHoverText(subscription.name, 20, 'text-sm font-medium text-gray-900');
+		  const typeHtml = createHoverText((subscription.customType || '其他'), 15, 'text-sm text-gray-900');
+		  const periodHtml = periodText ? createHoverText('周期: ' + periodText, 20, 'text-xs text-gray-500 mt-1') : '';
 
           // 到期时间相关信息
           const expiryDateText = formatBeijingTime(new Date(subscription.expiryDate), 'date');
@@ -1102,38 +1256,42 @@ const adminPage = `
             '开始: ' + formatBeijingTime(new Date(subscription.startDate), 'date') + (startLunarText ? ' (' + startLunarText + ')' : '') : '';
           const startDateHtml = startDateText ? createHoverText(startDateText, 30, 'text-xs text-gray-500 mt-1') : '';
 
-          row.innerHTML =
-            '<td data-label="名称" class="px-4 py-3"><div class="td-content-wrapper">' +
-              nameHtml +
-              notesHtml +
-            '</div></td>' +
-            '<td data-label="类型" class="px-4 py-3"><div class="td-content-wrapper">' +
-              '<div class="flex items-center"><i class="fas fa-tag mr-1"></i><span>' + typeHtml + '</span></div>' +
-              (periodHtml ? '<div class="flex items-center">' + periodHtml + autoRenewIcon + '</div>' : '') +
-            '</div></td>' +
-            '<td data-label="到期时间" class="px-4 py-3"><div class="td-content-wrapper">' +
-              '<div class="text-sm text-gray-900">' + expiryDateText + '</div>' +
-              lunarHtml +
-              '<div class="text-xs text-gray-500 mt-1">' + daysLeftText + '</div>' +
-              startDateHtml +
-            '</div></td>' +
-            '<td data-label="提醒设置" class="px-4 py-3"><div class="td-content-wrapper">' +
-              '<div><i class="fas fa-bell mr-1"></i>提前' + (subscription.reminderDays || 0) + '天</div>' +
-              (subscription.reminderDays === 0 ? '<div class="text-xs text-gray-500 mt-1">仅到期日提醒</div>' : '') +
-            '</div></td>' +
-            '<td data-label="状态" class="px-4 py-3"><div class="td-content-wrapper">' + statusHtml + '</div></td>' +
-            '<td data-label="操作" class="px-4 py-3">' +
-              '<div class="action-buttons-wrapper">' +
-                '<button class="edit btn-primary text-white px-2 py-1 rounded text-xs whitespace-nowrap" data-id="' + subscription.id + '"><i class="fas fa-edit mr-1"></i>编辑</button>' +
-                '<button class="test-notify btn-info text-white px-2 py-1 rounded text-xs whitespace-nowrap" data-id="' + subscription.id + '"><i class="fas fa-paper-plane mr-1"></i>测试</button>' +
-                '<button class="delete btn-danger text-white px-2 py-1 rounded text-xs whitespace-nowrap" data-id="' + subscription.id + '"><i class="fas fa-trash-alt mr-1"></i>删除</button>' +
-                (subscription.isActive ?
-                  '<button class="toggle-status btn-warning text-white px-2 py-1 rounded text-xs whitespace-nowrap" data-id="' + subscription.id + '" data-action="deactivate"><i class="fas fa-pause-circle mr-1"></i>停用</button>' :
-                  '<button class="toggle-status btn-success text-white px-2 py-1 rounded text-xs whitespace-nowrap" data-id="' + subscription.id + '" data-action="activate"><i class="fas fa-play-circle mr-1"></i>启用</button>') +
-              '</div>' +
-            '</td>';
-          
-          tbody.appendChild(row);
+		  //新增修改，修改日历类型
+		  row.innerHTML =
+			'<td data-label="名称" class="px-4 py-3"><div class="td-content-wrapper">' +
+			  nameHtml +
+			  notesHtml +
+			'</div></td>' +
+			'<td data-label="类型" class="px-4 py-3"><div class="td-content-wrapper">' +
+			  '<div class="flex items-center"><i class="fas fa-tag mr-1"></i><span>' + typeHtml + '</span></div>' +
+			  (periodHtml ? '<div class="flex items-center">' + periodHtml + autoRenewIcon + '</div>' : '') +
+			  calendarTypeHtml + // 新增：日历类型
+			'</div></td>' +
+			// ...existing code...
+			'<td data-label="到期时间" class="px-4 py-3"><div class="td-content-wrapper">' +
+			  '<div class="text-sm text-gray-900">' + expiryDateText + '</div>' +
+			  lunarHtml +
+			  '<div class="text-xs text-gray-500 mt-1">' + daysLeftText + '</div>' +
+			  startDateHtml +
+			'</div></td>' +
+			// ...existing code...
+			'<td data-label="提醒设置" class="px-4 py-3"><div class="td-content-wrapper">' +
+			  '<div><i class="fas fa-bell mr-1"></i>提前' + (subscription.reminderDays || 0) + '天</div>' +
+			  (subscription.reminderDays === 0 ? '<div class="text-xs text-gray-500 mt-1">仅到期日提醒</div>' : '') +
+			'</div></td>' +
+			'<td data-label="状态" class="px-4 py-3"><div class="td-content-wrapper">' + statusHtml + '</div></td>' +
+			'<td data-label="操作" class="px-4 py-3">' +
+			  '<div class="action-buttons-wrapper">' +
+				'<button class="edit btn-primary text-white px-2 py-1 rounded text-xs whitespace-nowrap" data-id="' + subscription.id + '"><i class="fas fa-edit mr-1"></i>编辑</button>' +
+				'<button class="test-notify btn-info text-white px-2 py-1 rounded text-xs whitespace-nowrap" data-id="' + subscription.id + '"><i class="fas fa-paper-plane mr-1"></i>测试</button>' +
+				'<button class="delete btn-danger text-white px-2 py-1 rounded text-xs whitespace-nowrap" data-id="' + subscription.id + '"><i class="fas fa-trash-alt mr-1"></i>删除</button>' +
+				(subscription.isActive ?
+				  '<button class="toggle-status btn-warning text-white px-2 py-1 rounded text-xs whitespace-nowrap" data-id="' + subscription.id + '" data-action="deactivate"><i class="fas fa-pause-circle mr-1"></i>停用</button>' :
+				  '<button class="toggle-status btn-success text-white px-2 py-1 rounded text-xs whitespace-nowrap" data-id="' + subscription.id + '" data-action="activate"><i class="fas fa-play-circle mr-1"></i>启用</button>') +
+			  '</div>' +
+			'</td>';
+
+		  tbody.appendChild(row);
         });
         
         document.querySelectorAll('.edit').forEach(button => {
@@ -1329,11 +1487,15 @@ const adminPage = `
     function setupModalEventListeners() {
       document.getElementById('calculateExpiryBtn').removeEventListener('click', calculateExpiryDate);
       document.getElementById('calculateExpiryBtn').addEventListener('click', calculateExpiryDate);
+	  document.getElementById('useLunar').removeEventListener('change', calculateExpiryDate);//新增修改，
+	  document.getElementById('useLunar').addEventListener('change', calculateExpiryDate);//新增修改，
 
       ['startDate', 'periodValue', 'periodUnit'].forEach(id => {
         const element = document.getElementById(id);
         element.removeEventListener('change', calculateExpiryDate);
         element.addEventListener('change', calculateExpiryDate);
+		document.getElementById('useLunar').removeEventListener('change', calculateExpiryDate);//新增修改，
+	    document.getElementById('useLunar').addEventListener('change', calculateExpiryDate);//新增修改，
       });
 
       // 添加农历显示事件监听
@@ -1350,33 +1512,64 @@ const adminPage = `
         document.getElementById('subscriptionModal').classList.add('hidden');
       });
     }
-    
-    function calculateExpiryDate() {
-      const startDate = document.getElementById('startDate').value;
-      const periodValue = parseInt(document.getElementById('periodValue').value);
-      const periodUnit = document.getElementById('periodUnit').value;
 
-      if (!startDate || !periodValue || !periodUnit) {
-        return;
-      }
+	// 3. 新增修改， calculateExpiryDate 函数，支持农历周期推算     
+	function calculateExpiryDate() {
+	  const startDate = document.getElementById('startDate').value;
+	  const periodValue = parseInt(document.getElementById('periodValue').value);
+	  const periodUnit = document.getElementById('periodUnit').value;
+	  const useLunar = document.getElementById('useLunar').checked;
 
-      const start = new Date(startDate);
-      const expiry = new Date(start);
+	  if (!startDate || !periodValue || !periodUnit) {
+		return;
+	  }
 
-      if (periodUnit === 'day') {
-        expiry.setDate(start.getDate() + periodValue);
-      } else if (periodUnit === 'month') {
-        expiry.setMonth(start.getMonth() + periodValue);
-      } else if (periodUnit === 'year') {
-        expiry.setFullYear(start.getFullYear() + periodValue);
-      }
+	  if (useLunar) {
+		// 农历推算
+		const start = new Date(startDate);
+		const lunar = lunarCalendar.solar2lunar(start.getFullYear(), start.getMonth() + 1, start.getDate());
+		let nextLunar = addLunarPeriod(lunar, periodValue, periodUnit);
+		const solar = lunar2solar(nextLunar);
+		//const expiry = new Date(solar.year, solar.month - 1, solar.day);
+		
+		  // 使用与公历相同的方式创建日期  
+  const expiry = new Date(startDate); // 从原始日期开始  
+  expiry.setFullYear(solar.year);  
+  expiry.setMonth(solar.month - 1);  
+  expiry.setDate(solar.day);  
+		document.getElementById('expiryDate').value = expiry.toISOString().split('T')[0];
+		console.log('start:', start);
+		console.log('nextLunar:', nextLunar);
+		console.log('expiry:', expiry);
+		console.log('expiryDate:', document.getElementById('expiryDate').value);
+		
+		console.log('solar from lunar2solar:', solar);  
+		console.log('solar.year:', solar.year, 'solar.month:', solar.month, 'solar.day:', solar.day);
+		console.log('expiry.getTime():', expiry.getTime());  
+console.log('expiry.toString():', expiry.toString());
+		
+		
+	  } else {
+		// 公历推算
+		const start = new Date(startDate);
+		const expiry = new Date(start);
+		if (periodUnit === 'day') {
+		  expiry.setDate(start.getDate() + periodValue);
+		} else if (periodUnit === 'month') {
+		  expiry.setMonth(start.getMonth() + periodValue);
+		} else if (periodUnit === 'year') {
+		  expiry.setFullYear(start.getFullYear() + periodValue);
+		}
+		document.getElementById('expiryDate').value = expiry.toISOString().split('T')[0];
+		console.log('start:', start);
+		console.log('expiry:', expiry);
+		console.log('expiryDate:', document.getElementById('expiryDate').value);
+	  }
 
-      document.getElementById('expiryDate').value = expiry.toISOString().split('T')[0];
-
-      // 更新农历显示
-      updateLunarDisplay('startDate', 'startDateLunar');
-      updateLunarDisplay('expiryDate', 'expiryDateLunar');
-    }
+	  // 更新农历显示
+	  updateLunarDisplay('startDate', 'startDateLunar');
+	  updateLunarDisplay('expiryDate', 'expiryDateLunar');
+	}
     
     document.getElementById('closeModal').addEventListener('click', () => {
       document.getElementById('subscriptionModal').classList.add('hidden');
@@ -1389,6 +1582,10 @@ const adminPage = `
     //   }
     // });
     
+	
+	// 4. 新增修改，监听 useLunar 复选框变化时也自动重新计算
+	document.getElementById('useLunar').addEventListener('change', calculateExpiryDate);   
+   // 新增修改，表单提交时带上 useLunar 字段
     document.getElementById('subscriptionForm').addEventListener('submit', async (e) => {
       e.preventDefault();
       
@@ -1407,7 +1604,8 @@ const adminPage = `
         expiryDate: document.getElementById('expiryDate').value,
         periodValue: parseInt(document.getElementById('periodValue').value),
         periodUnit: document.getElementById('periodUnit').value,
-        reminderDays: parseInt(document.getElementById('reminderDays').value) || 0
+        reminderDays: parseInt(document.getElementById('reminderDays').value) || 0,
+		useLunar: document.getElementById('useLunar').checked // 新增修改
       };
       
       const submitButton = e.target.querySelector('button[type="submit"]');
@@ -1443,6 +1641,7 @@ const adminPage = `
       }
     });
     
+	// 新增修改，编辑订阅时回显 useLunar 字段
     async function editSubscription(e) {
       const id = e.target.dataset.id || e.target.parentElement.dataset.id;
       
@@ -1463,6 +1662,7 @@ const adminPage = `
           document.getElementById('periodValue').value = subscription.periodValue || 1;
           document.getElementById('periodUnit').value = subscription.periodUnit || 'month';
           document.getElementById('reminderDays').value = subscription.reminderDays !== undefined ? subscription.reminderDays : 7;
+		  document.getElementById('useLunar').checked = !!subscription.useLunar; // 新增修改
           
           clearFieldErrors();
           loadLunarPreference();
@@ -2620,6 +2820,7 @@ async function getSubscription(id, env) {
   return subscriptions.find(s => s.id === id);
 }
 
+// 2. 修改 createSubscription，支持 useLunar 字段
 async function createSubscription(subscription, env) {
   try {
     const subscriptions = await getAllSubscriptions(env);
@@ -2630,18 +2831,38 @@ async function createSubscription(subscription, env) {
 
     let expiryDate = new Date(subscription.expiryDate);
     const now = new Date();
+    
 
-    if (expiryDate < now && subscription.periodValue && subscription.periodUnit) {
-      while (expiryDate < now) {
-        if (subscription.periodUnit === 'day') {
-          expiryDate.setDate(expiryDate.getDate() + subscription.periodValue);
-        } else if (subscription.periodUnit === 'month') {
-          expiryDate.setMonth(expiryDate.getMonth() + subscription.periodValue);
-        } else if (subscription.periodUnit === 'year') {
-          expiryDate.setFullYear(expiryDate.getFullYear() + subscription.periodValue);
+    let useLunar = !!subscription.useLunar;
+    if (useLunar) {
+      let lunar = lunarCalendar.solar2lunar(
+        expiryDate.getFullYear(),
+        expiryDate.getMonth() + 1,
+        expiryDate.getDate()
+      );
+      
+      if (lunar && subscription.periodValue && subscription.periodUnit) {
+        // 如果到期日<=今天，自动推算到下一个周期
+        while (expiryDate <= now) {
+          lunar = lunarBiz.addLunarPeriod(lunar, subscription.periodValue, subscription.periodUnit);
+          const solar = lunarBiz.lunar2solar(lunar);
+          expiryDate = new Date(solar.year, solar.month - 1, solar.day);
         }
+        subscription.expiryDate = expiryDate.toISOString();
       }
-      subscription.expiryDate = expiryDate.toISOString();
+    } else {
+      if (expiryDate < now && subscription.periodValue && subscription.periodUnit) {
+        while (expiryDate < now) {
+          if (subscription.periodUnit === 'day') {
+            expiryDate.setDate(expiryDate.getDate() + subscription.periodValue);
+          } else if (subscription.periodUnit === 'month') {
+            expiryDate.setMonth(expiryDate.getMonth() + subscription.periodValue);
+          } else if (subscription.periodUnit === 'year') {
+            expiryDate.setFullYear(expiryDate.getFullYear() + subscription.periodValue);
+          }
+        }
+        subscription.expiryDate = expiryDate.toISOString();
+      }
     }
 
     const newSubscription = {
@@ -2656,6 +2877,7 @@ async function createSubscription(subscription, env) {
       notes: subscription.notes || '',
       isActive: subscription.isActive !== false,
       autoRenew: subscription.autoRenew !== false,
+      useLunar: useLunar, // 新增
       createdAt: new Date().toISOString()
     };
 
@@ -2665,10 +2887,12 @@ async function createSubscription(subscription, env) {
 
     return { success: true, subscription: newSubscription };
   } catch (error) {
-    return { success: false, message: '创建订阅失败' };
+    console.error("创建订阅异常：", error && error.stack ? error.stack : error);
+    return { success: false, message: error && error.message ? error.message : '创建订阅失败' };
   }
 }
 
+// 3. 修改 updateSubscription，支持 useLunar 字段
 async function updateSubscription(id, subscription, env) {
   try {
     const subscriptions = await getAllSubscriptions(env);
@@ -2685,17 +2909,38 @@ async function updateSubscription(id, subscription, env) {
     let expiryDate = new Date(subscription.expiryDate);
     const now = new Date();
 
-    if (expiryDate < now && subscription.periodValue && subscription.periodUnit) {
-      while (expiryDate < now) {
-        if (subscription.periodUnit === 'day') {
-          expiryDate.setDate(expiryDate.getDate() + subscription.periodValue);
-        } else if (subscription.periodUnit === 'month') {
-          expiryDate.setMonth(expiryDate.getMonth() + subscription.periodValue);
-        } else if (subscription.periodUnit === 'year') {
-          expiryDate.setFullYear(expiryDate.getFullYear() + subscription.periodValue);
+let useLunar = !!subscription.useLunar;
+if (useLunar) {
+  let lunar = lunarCalendar.solar2lunar(
+    expiryDate.getFullYear(),
+    expiryDate.getMonth() + 1,
+    expiryDate.getDate()
+  );
+  if (!lunar) {
+    return { success: false, message: '农历日期超出支持范围（1900-2100年）' };
+  }
+  if (lunar && expiryDate < now && subscription.periodValue && subscription.periodUnit) {
+    // 新增：循环加周期，直到 expiryDate > now
+    do {
+      lunar = lunarBiz.addLunarPeriod(lunar, subscription.periodValue, subscription.periodUnit);
+      const solar = lunarBiz.lunar2solar(lunar);
+      expiryDate = new Date(solar.year, solar.month - 1, solar.day);
+    } while (expiryDate < now);
+    subscription.expiryDate = expiryDate.toISOString();
+  }
+} else {
+      if (expiryDate < now && subscription.periodValue && subscription.periodUnit) {
+        while (expiryDate < now) {
+          if (subscription.periodUnit === 'day') {
+            expiryDate.setDate(expiryDate.getDate() + subscription.periodValue);
+          } else if (subscription.periodUnit === 'month') {
+            expiryDate.setMonth(expiryDate.getMonth() + subscription.periodValue);
+          } else if (subscription.periodUnit === 'year') {
+            expiryDate.setFullYear(expiryDate.getFullYear() + subscription.periodValue);
+          }
         }
+        subscription.expiryDate = expiryDate.toISOString();
       }
-      subscription.expiryDate = expiryDate.toISOString();
     }
 
     subscriptions[index] = {
@@ -2710,6 +2955,7 @@ async function updateSubscription(id, subscription, env) {
       notes: subscription.notes || '',
       isActive: subscription.isActive !== undefined ? subscription.isActive : subscriptions[index].isActive,
       autoRenew: subscription.autoRenew !== undefined ? subscription.autoRenew : (subscriptions[index].autoRenew !== undefined ? subscriptions[index].autoRenew : true),
+      useLunar: useLunar, // 新增
       updatedAt: new Date().toISOString()
     };
 
@@ -3130,7 +3376,7 @@ async function sendNotification(title, content, description, config) {
   }
 }
 
-// 定时检查即将到期的订阅 - 完全优化版
+// 4. 修改定时任务 checkExpiringSubscriptions，支持农历周期自动续订和农历提醒
 async function checkExpiringSubscriptions(env) {
   try {
     const now = new Date();
@@ -3145,111 +3391,142 @@ async function checkExpiringSubscriptions(env) {
     const updatedSubscriptions = [];
     let hasUpdates = false;
 
-    for (const subscription of subscriptions) {
-      if (subscription.isActive === false) {
-        console.log('[定时任务] 订阅 "' + subscription.name + '" 已停用，跳过');
-        continue;
-      }
+for (const subscription of subscriptions) {
+  if (subscription.isActive === false) {
+    console.log('[定时任务] 订阅 "' + subscription.name + '" 已停用，跳过');
+    continue;
+  }
 
-      const expiryDate = new Date(subscription.expiryDate);
-      const daysDiff = Math.ceil((expiryDate - now) / (1000 * 60 * 60 * 24));
+  let daysDiff;
+  if (subscription.useLunar) {
+    const expiryDate = new Date(subscription.expiryDate);
+    let lunar = lunarCalendar.solar2lunar(
+      expiryDate.getFullYear(),
+      expiryDate.getMonth() + 1,
+      expiryDate.getDate()
+    );
+    daysDiff = lunarBiz.daysToLunar(lunar);
 
-      console.log('[定时任务] 订阅 "' + subscription.name + '" 到期日期: ' + expiryDate.toISOString() + ', 剩余天数: ' + daysDiff);
+    console.log('[定时任务] 订阅 "' + subscription.name + '" 到期日期: ' + expiryDate.toISOString() + ', 剩余天数: ' + daysDiff);
 
-      // 修复提前提醒天数逻辑
-      const reminderDays = subscription.reminderDays !== undefined ? subscription.reminderDays : 7;
-      let shouldRemind = false;
+    if (daysDiff < 0 && subscription.periodValue && subscription.periodUnit && subscription.autoRenew !== false) {
+      let nextLunar = lunar;
+      do {
+        nextLunar = lunarBiz.addLunarPeriod(nextLunar, subscription.periodValue, subscription.periodUnit);
+        const solar = lunarBiz.lunar2solar(nextLunar);
+        var newExpiryDate = new Date(solar.year, solar.month - 1, solar.day);
+        daysDiff = lunarBiz.daysToLunar(nextLunar);
+        console.log('[定时任务] 订阅 "' + subscription.name + '" 更新到期日期: ' + newExpiryDate.toISOString() + ', 剩余天数: ' + daysDiff);
+      } while (daysDiff < 0);
 
+      const updatedSubscription = { ...subscription, expiryDate: newExpiryDate.toISOString() };
+      updatedSubscriptions.push(updatedSubscription);
+      hasUpdates = true;
+
+      let reminderDays = subscription.reminderDays !== undefined ? subscription.reminderDays : 7;
+      let shouldRemindAfterRenewal = false;
       if (reminderDays === 0) {
-        // 当提前提醒天数为0时，只在到期日当天提醒
-        shouldRemind = daysDiff === 0;
+        shouldRemindAfterRenewal = daysDiff === 0;
       } else {
-        // 当提前提醒天数大于0时，在指定范围内提醒
-        shouldRemind = daysDiff >= 0 && daysDiff <= reminderDays;
+        shouldRemindAfterRenewal = daysDiff >= 0 && daysDiff <= reminderDays;
       }
-
-      // 如果已过期，且设置了周期和自动续订，则自动更新到下一个周期
-      if (daysDiff < 0 && subscription.periodValue && subscription.periodUnit && subscription.autoRenew !== false) {
-        console.log('[定时任务] 订阅 "' + subscription.name + '" 已过期且启用自动续订，正在更新到下一个周期');
-
-        const newExpiryDate = new Date(expiryDate);
-
-        if (subscription.periodUnit === 'day') {
-          newExpiryDate.setDate(expiryDate.getDate() + subscription.periodValue);
-        } else if (subscription.periodUnit === 'month') {
-          newExpiryDate.setMonth(expiryDate.getMonth() + subscription.periodValue);
-        } else if (subscription.periodUnit === 'year') {
-          newExpiryDate.setFullYear(expiryDate.getFullYear() + subscription.periodValue);
-        }
-
-        while (newExpiryDate < now) {
-          console.log('[定时任务] 新计算的到期日期 ' + newExpiryDate.toISOString() + ' 仍然过期，继续计算下一个周期');
-
-          if (subscription.periodUnit === 'day') {
-            newExpiryDate.setDate(newExpiryDate.getDate() + subscription.periodValue);
-          } else if (subscription.periodUnit === 'month') {
-            newExpiryDate.setMonth(newExpiryDate.getMonth() + subscription.periodValue);
-          } else if (subscription.periodUnit === 'year') {
-            newExpiryDate.setFullYear(newExpiryDate.getFullYear() + subscription.periodValue);
-          }
-        }
-
-        console.log('[定时任务] 订阅 "' + subscription.name + '" 更新到期日期: ' + newExpiryDate.toISOString());
-
-        const updatedSubscription = { ...subscription, expiryDate: newExpiryDate.toISOString() };
-        updatedSubscriptions.push(updatedSubscription);
-        hasUpdates = true;
-
-        const newDaysDiff = Math.ceil((newExpiryDate - now) / (1000 * 60 * 60 * 24));
-
-        let shouldRemindAfterRenewal = false;
-        if (reminderDays === 0) {
-          shouldRemindAfterRenewal = newDaysDiff === 0;
-        } else {
-          shouldRemindAfterRenewal = newDaysDiff >= 0 && newDaysDiff <= reminderDays;
-        }
-
-        if (shouldRemindAfterRenewal) {
-          console.log('[定时任务] 订阅 "' + subscription.name + '" 在提醒范围内，将发送通知');
-          expiringSubscriptions.push({
-            ...updatedSubscription,
-            daysRemaining: newDaysDiff
-          });
-        }
-      } else if (daysDiff < 0 && subscription.autoRenew === false) {
-        console.log('[定时任务] 订阅 "' + subscription.name + '" 已过期且未启用自动续订，将发送过期通知');
-        expiringSubscriptions.push({
-          ...subscription,
-          daysRemaining: daysDiff
-        });
-      } else if (shouldRemind) {
+      if (shouldRemindAfterRenewal) {
         console.log('[定时任务] 订阅 "' + subscription.name + '" 在提醒范围内，将发送通知');
         expiringSubscriptions.push({
-          ...subscription,
+          ...updatedSubscription,
           daysRemaining: daysDiff
         });
       }
+      continue;
     }
+  } else {
+    const expiryDate = new Date(subscription.expiryDate);
+    daysDiff = Math.ceil((expiryDate - now) / (1000 * 60 * 60 * 24));
+
+    console.log('[定时任务] 订阅 "' + subscription.name + '" 到期日期: ' + expiryDate.toISOString() + ', 剩余天数: ' + daysDiff);
+
+    if (daysDiff < 0 && subscription.periodValue && subscription.periodUnit && subscription.autoRenew !== false) {
+      const newExpiryDate = new Date(expiryDate);
+
+      if (subscription.periodUnit === 'day') {
+        newExpiryDate.setDate(expiryDate.getDate() + subscription.periodValue);
+      } else if (subscription.periodUnit === 'month') {
+        newExpiryDate.setMonth(expiryDate.getMonth() + subscription.periodValue);
+      } else if (subscription.periodUnit === 'year') {
+        newExpiryDate.setFullYear(expiryDate.getFullYear() + subscription.periodValue);
+      }
+
+      while (newExpiryDate < now) {
+        console.log('[定时任务] 新计算的到期日期 ' + newExpiryDate.toISOString() + ' 仍然过期，继续计算下一个周期');
+        if (subscription.periodUnit === 'day') {
+          newExpiryDate.setDate(newExpiryDate.getDate() + subscription.periodValue);
+        } else if (subscription.periodUnit === 'month') {
+          newExpiryDate.setMonth(newExpiryDate.getMonth() + subscription.periodValue);
+        } else if (subscription.periodUnit === 'year') {
+          newExpiryDate.setFullYear(newExpiryDate.getFullYear() + subscription.periodValue);
+        }
+      }
+
+      console.log('[定时任务] 订阅 "' + subscription.name + '" 更新到期日期: ' + newExpiryDate.toISOString());
+
+      const updatedSubscription = { ...subscription, expiryDate: newExpiryDate.toISOString() };
+      updatedSubscriptions.push(updatedSubscription);
+      hasUpdates = true;
+
+      const newDaysDiff = Math.ceil((newExpiryDate - now) / (1000 * 60 * 60 * 24));
+      let reminderDays = subscription.reminderDays !== undefined ? subscription.reminderDays : 7;
+      let shouldRemindAfterRenewal = false;
+      if (reminderDays === 0) {
+        shouldRemindAfterRenewal = newDaysDiff === 0;
+      } else {
+        shouldRemindAfterRenewal = newDaysDiff >= 0 && newDaysDiff <= reminderDays;
+      }
+      if (shouldRemindAfterRenewal) {
+        console.log('[定时任务] 订阅 "' + subscription.name + '" 在提醒范围内，将发送通知');
+        expiringSubscriptions.push({
+          ...updatedSubscription,
+          daysRemaining: newDaysDiff
+        });
+      }
+      continue;
+    }
+  }
+
+  const reminderDays = subscription.reminderDays !== undefined ? subscription.reminderDays : 7;
+  let shouldRemind = false;
+  if (reminderDays === 0) {
+    shouldRemind = daysDiff === 0;
+  } else {
+    shouldRemind = daysDiff >= 0 && daysDiff <= reminderDays;
+  }
+
+  if (daysDiff < 0 && subscription.autoRenew === false) {
+    console.log('[定时任务] 订阅 "' + subscription.name + '" 已过期且未启用自动续订，将发送过期通知');
+    expiringSubscriptions.push({
+      ...subscription,
+      daysRemaining: daysDiff
+    });
+  } else if (shouldRemind) {
+    console.log('[定时任务] 订阅 "' + subscription.name + '" 在提醒范围内，将发送通知');
+    expiringSubscriptions.push({
+      ...subscription,
+      daysRemaining: daysDiff
+    });
+  }
+}
 
     if (hasUpdates) {
-      console.log('[定时任务] 有 ' + updatedSubscriptions.length + ' 个订阅需要更新到下一个周期');
-
       const mergedSubscriptions = subscriptions.map(sub => {
         const updated = updatedSubscriptions.find(u => u.id === sub.id);
         return updated || sub;
       });
-
       await env.SUBSCRIPTIONS_KV.put('subscriptions', JSON.stringify(mergedSubscriptions));
-      console.log('[定时任务] 已更新订阅列表');
     }
 
     if (expiringSubscriptions.length > 0) {
-      console.log('[定时任务] 有 ' + expiringSubscriptions.length + ' 个订阅需要发送通知');
-
       let commonContent = '';
       expiringSubscriptions.sort((a, b) => a.daysRemaining - b.daysRemaining);
 
-      // 检查是否显示农历（从配置中获取，默认不显示）
       const showLunar = config.SHOW_LUNAR === true;
 
       for (const sub of expiringSubscriptions) {
@@ -3258,7 +3535,6 @@ async function checkExpiringSubscriptions(env) {
 
         let lunarExpiryText = '';
         if (showLunar) {
-          // 计算农历日期
           const expiryDateObj = new Date(sub.expiryDate);
           const lunarExpiry = lunarCalendar.solar2lunar(expiryDateObj.getFullYear(), expiryDateObj.getMonth() + 1, expiryDateObj.getDate());
           lunarExpiryText = lunarExpiry ? ` (农历: ${lunarExpiry.fullStr})` : '';
@@ -3275,12 +3551,7 @@ async function checkExpiringSubscriptions(env) {
 
       const title = '订阅到期提醒';
       await sendNotificationToAllChannels(title, commonContent, config, '[定时任务]');
-
-    } else {
-      console.log('[定时任务] 没有需要提醒的订阅');
     }
-
-    console.log('[定时任务] 检查完成');
   } catch (error) {
     console.error('[定时任务] 检查即将到期的订阅失败:', error);
   }
