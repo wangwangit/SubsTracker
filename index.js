@@ -493,6 +493,26 @@ const themeResources = `
         color: #f3f4f6;
     }
   }
+  @media (min-width: 768px) {   /* === 桌面端表格样式（卡片化行） === */
+
+    .responsive-table tbody td {        /* 行卡片需要独立背景色 */
+      background: #fff;
+    }
+
+    .responsive-table tbody tr td:first-child {   /* 行卡片：左侧圆角 */
+      border-top-left-radius: 0.75rem;
+      border-bottom-left-radius: 0.75rem;
+    }
+
+    .responsive-table tbody tr td:last-child {    /* 行卡片：右侧圆角 */
+      border-top-right-radius: 0.75rem;
+      border-bottom-right-radius: 0.75rem;
+    }
+
+    .responsive-table tbody tr {         /* 行卡片阴影，增强层级感 */
+      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    }
+  }
 </style>
 <script>
   (function() {
@@ -1096,10 +1116,10 @@ const adminPage = `
       </div>
     </div>
     
-    <div class="table-container bg-white rounded-lg overflow-hidden">
+    <div class="table-container bg-transparent md:bg-white rounded-none md:rounded-lg overflow-visible">
       <div class="overflow-x-auto">
-        <table class="w-full divide-y divide-gray-200 responsive-table">
-          <thead class="bg-gray-50">
+        <table class="w-full responsive-table md:border-separate md:border-spacing-y-3">
+          <thead class="bg-transparent md:bg-gray-50">
             <tr>
               <th scope="col" class="px-4 py-3 text-left text-sm font-medium text-gray-500 uppercase tracking-wider" style="width: 23%;">
                 名称
@@ -1124,12 +1144,10 @@ const adminPage = `
               </th>
             </tr>
           </thead>
-        <tbody id="subscriptionsBody" class="bg-white divide-y divide-gray-200">
-        </tbody>
+          <tbody id="subscriptionsBody" class="bg-transparent md:bg-white"></tbody>
         </table>
       </div>
     </div>
-  </div>
 
   <div id="subscriptionModal" class="fixed inset-0 z-50 hidden overflow-y-auto bg-gray-600 bg-opacity-50">
     <div class="relative w-auto max-w-2xl mx-4 md:mx-auto my-12 bg-white rounded-lg shadow-xl">
