@@ -1,13 +1,14 @@
-name = "subscription-manager"
+# wrangler.toml
+name = 'subtrackers'
 main = "index.js"
 compatibility_date = "2024-01-01"
 compatibility_flags = ["nodejs_compat"]
 
 [env.production]
-name = "subscription-manager"
+name = "subtrackers"
 
 [env.staging]
-name = "subscription-manager-staging"
+name = "subtrackers-staging"
 
 # KV 命名空间配置
 [[kv_namespaces]]
