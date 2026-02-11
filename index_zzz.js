@@ -2797,6 +2797,12 @@ const lunarBiz = {
                 return \`
                     <div class="border-b border-gray-200 py-3 hover:bg-gray-50">
                         <div class="flex justify-between items-start gap-3">
+                            <div class="flex items-center">
+                                <input type="checkbox" 
+                                       class="payment-checkbox mr-3 w-4 h-4 text-blue-600 rounded focus:ring-blue-500" 
+                                       data-payment-id="\${payment.id}"
+                                       onchange="updateBatchDeleteButton()">
+                            </div>
                             <div class="flex-1">
                                 <div class="flex items-center gap-2">
                                     <i class="fas fa-calendar-alt text-gray-400"></i>
@@ -2854,6 +2860,22 @@ const lunarBiz = {
                         </div>
                     </div>
 
+                    <div class="mt-4 flex items-center justify-between mb-2">
+                        <div class="flex items-center gap-2">
+                            <input type="checkbox" 
+                                   id="selectAllPayments" 
+                                   class="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
+                                   onchange="toggleSelectAllPayments(this.checked)">
+                            <label for="selectAllPayments" class="text-sm text-gray-700 cursor-pointer">全选</label>
+                        </div>
+                        <button id="batchDeleteBtn" 
+                                onclick="batchDeletePaymentRecords('\${subscription.id}')"
+                                class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                                disabled>
+                            <i class="fas fa-trash-alt mr-1"></i>批量删除 (<span id="selectedCount">0</span>)
+                        </button>
+                    </div>
+
                     <div class="mt-4 max-h-96 overflow-y-auto">
                         \${paymentsHtml}
                     </div>
@@ -2877,6 +2899,73 @@ const lunarBiz = {
         const modal = document.getElementById('paymentHistoryModal');
         if (modal) {
             modal.remove();
+        }
+    };
+
+    window.toggleSelectAllPayments = function(checked) {
+        const checkboxes = document.querySelectorAll('.payment-checkbox');
+        checkboxes.forEach(cb => cb.checked = checked);
+        updateBatchDeleteButton();
+    };
+
+    window.updateBatchDeleteButton = function() {
+        const checkboxes = document.querySelectorAll('.payment-checkbox:checked');
+        const count = checkboxes.length;
+        const btn = document.getElementById('batchDeleteBtn');
+        const countSpan = document.getElementById('selectedCount');
+        const selectAllCheckbox = document.getElementById('selectAllPayments');
+        
+        if (countSpan) countSpan.textContent = count;
+        if (btn) btn.disabled = count === 0;
+        
+        // 更新全选复选框状态
+        if (selectAllCheckbox) {
+            const allCheckboxes = document.querySelectorAll('.payment-checkbox');
+            selectAllCheckbox.checked = allCheckboxes.length > 0 && count === allCheckboxes.length;
+            selectAllCheckbox.indeterminate = count > 0 && count < allCheckboxes.length;
+        }
+    };
+
+    window.batchDeletePaymentRecords = async function(subscriptionId) {
+        const checkboxes = document.querySelectorAll('.payment-checkbox:checked');
+        const paymentIds = Array.from(checkboxes).map(cb => cb.dataset.paymentId);
+        
+        if (paymentIds.length === 0) {
+            showToast('请选择要删除的支付记录', 'warning');
+            return;
+        }
+
+        if (!confirm(\`确认删除选中的 \${paymentIds.length} 条支付记录？删除后将重新计算订阅到期时间和统计数据。\`)) {
+            return;
+        }
+
+        const btn = document.getElementById('batchDeleteBtn');
+        const originalHtml = btn.innerHTML;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i>删除中...';
+        btn.disabled = true;
+
+        try {
+            const response = await fetch(\`/api/subscriptions/\${subscriptionId}/payments/batch\`, {
+                method: 'DELETE',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ paymentIds })
+            });
+            const result = await response.json();
+
+            if (result.success) {
+                showToast(result.message || \`已删除 \${paymentIds.length} 条支付记录\`, 'success');
+                closePaymentHistoryModal();
+                await loadSubscriptions(false);
+            } else {
+                showToast(result.message || '批量删除失败', 'error');
+                btn.innerHTML = originalHtml;
+                btn.disabled = false;
+            }
+        } catch (error) {
+            console.error('批量删除支付记录失败:', error);
+            showToast('批量删除失败: ' + error.message, 'error');
+            btn.innerHTML = originalHtml;
+            btn.disabled = false;
         }
     };
 
@@ -6408,6 +6497,12 @@ const api = {
         return new Response(JSON.stringify({ success: true, payments: subscription.paymentHistory || [] }), { headers: { 'Content-Type': 'application/json' } });
       }
 
+      if (parts[3] === 'payments' && parts[4] === 'batch' && method === 'DELETE') {
+        const { paymentIds } = await request.json();
+        const result = await batchDeletePaymentRecords(id, paymentIds, env);
+        return new Response(JSON.stringify(result), { status: result.success ? 200 : 400, headers: { 'Content-Type': 'application/json' } });
+      }
+
       if (parts[3] === 'payments' && parts[4] && method === 'DELETE') {
         const paymentId = parts[4];
         const result = await deletePaymentRecord(id, paymentId, env);
@@ -7155,6 +7250,80 @@ async function deletePaymentRecord(subscriptionId, paymentId, env) {
   }
 }
 
+async function batchDeletePaymentRecords(subscriptionId, paymentIds, env) {
+  try {
+    if (!paymentIds || !Array.isArray(paymentIds) || paymentIds.length === 0) {
+      return { success: false, message: '请提供要删除的支付记录ID' };
+    }
+
+    const subscriptions = await getAllSubscriptions(env);
+    const index = subscriptions.findIndex(s => s.id === subscriptionId);
+
+    if (index === -1) {
+      return { success: false, message: '订阅不存在' };
+    }
+
+    const subscription = subscriptions[index];
+    let paymentHistory = subscription.paymentHistory || [];
+    
+    // 过滤掉要删除的支付记录
+    const deletedPayments = paymentHistory.filter(p => paymentIds.includes(p.id));
+    paymentHistory = paymentHistory.filter(p => !paymentIds.includes(p.id));
+
+    if (deletedPayments.length === 0) {
+      return { success: false, message: '未找到要删除的支付记录' };
+    }
+
+    // 重新计算订阅到期时间和最后支付日期
+    let newExpiryDate = subscription.expiryDate;
+    let newLastPaymentDate = subscription.lastPaymentDate;
+
+    if (paymentHistory.length > 0) {
+      // 找到剩余支付记录中 periodEnd 最晚的那条（最新的续订）
+      const sortedByPeriodEnd = [...paymentHistory].sort((a, b) => {
+        const dateA = a.periodEnd ? new Date(a.periodEnd) : new Date(0);
+        const dateB = b.periodEnd ? new Date(b.periodEnd) : new Date(0);
+        return dateB - dateA;
+      });
+
+      // 订阅的到期日期应该是最新续订的 periodEnd
+      if (sortedByPeriodEnd[0].periodEnd) {
+        newExpiryDate = sortedByPeriodEnd[0].periodEnd;
+      }
+
+      // 找到最新的支付记录日期
+      const sortedByDate = [...paymentHistory].sort((a, b) => new Date(b.date) - new Date(a.date));
+      newLastPaymentDate = sortedByDate[0].date;
+    } else {
+      // 如果没有支付记录了，回退到初始状态
+      // 使用第一条被删除记录的 periodStart（如果有）
+      const firstDeleted = deletedPayments.sort((a, b) => new Date(a.date) - new Date(b.date))[0];
+      if (firstDeleted.periodStart) {
+        newExpiryDate = firstDeleted.periodStart;
+      }
+      newLastPaymentDate = subscription.startDate || subscription.createdAt || subscription.expiryDate;
+    }
+
+    subscriptions[index] = {
+      ...subscription,
+      expiryDate: newExpiryDate,
+      paymentHistory,
+      lastPaymentDate: newLastPaymentDate
+    };
+
+    await env.SUBSCRIPTIONS_KV.put('subscriptions', JSON.stringify(subscriptions));
+
+    return { 
+      success: true, 
+      subscription: subscriptions[index], 
+      message: `已删除 ${deletedPayments.length} 条支付记录` 
+    };
+  } catch (error) {
+    console.error('批量删除支付记录失败:', error);
+    return { success: false, message: '批量删除失败: ' + error.message };
+  }
+}
+
 async function updatePaymentRecord(subscriptionId, paymentId, paymentData, env) {
   try {
     const subscriptions = await getAllSubscriptions(env);
@@ -7687,7 +7856,7 @@ function resolveSubscriptionEmailRecipients(subscription) {
   return normalizeEmailRecipients(subscription?.emailTo);
 }
 
-function shouldNotifyAtCurrentHour(notificationHours, currentHour, currentMinute) {
+function shouldNotifyAtCurrentHour(notificationHours, currentHour, currentMinute, expiryDate = null, timezone = 'UTC') {
   const normalized = normalizeNotificationHours(notificationHours);
   if (normalized.length === 0 || normalized.includes('*')) {
     return true;
@@ -7697,7 +7866,29 @@ function shouldNotifyAtCurrentHour(notificationHours, currentHour, currentMinute
   const currentTimeStr = String(currentHour).padStart(2, '0') + ':' + String(currentMinute).padStart(2, '0');
   const currentHourStr = String(currentHour).padStart(2, '0');
 
-  // 检查是否匹配
+  // 如果提供了过期时间，检查当前时间是否与过期时间的 HH:MM 相等
+  if (expiryDate) {
+    try {
+      const expiryTimeFormatter = new Intl.DateTimeFormat('en-US', {
+        timeZone: timezone,
+        hour12: false,
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+      const expiryTimeParts = expiryTimeFormatter.formatToParts(new Date(expiryDate));
+      const expiryHour = expiryTimeParts.find(p => p.type === 'hour')?.value || '00';
+      const expiryMinute = expiryTimeParts.find(p => p.type === 'minute')?.value || '00';
+      const expiryTimeStr = expiryHour + ':' + expiryMinute;
+      // 如果当前时间与过期时间的 HH:MM 相等，直接返回 true
+      if (currentTimeStr === expiryTimeStr) {
+        return true;
+      }
+    } catch (error) {
+      console.error('解析过期时间失败:', error);
+    }
+  }
+
+  // 检查是否匹配配置的通知时间
   for (const time of normalized) {
     if (time.includes(':')) {
       // 对于 HH:MM 格式，允许在同一分钟内触发（考虑到定时任务可能不是精确在该分钟的0秒执行）
@@ -8227,7 +8418,13 @@ async function checkExpiringSubscriptions(env) {
 
       const reminderSetting = resolveReminderSetting(subscription);
       const subscriptionNotificationHours = resolveSubscriptionNotificationHours(subscription, config);
-      const shouldNotifyThisHour = shouldNotifyAtCurrentHour(subscriptionNotificationHours, currentHour, currentMinute);
+      const shouldNotifyThisHour = shouldNotifyAtCurrentHour(
+        subscriptionNotificationHours, 
+        currentHour, 
+        currentMinute, 
+        subscription.expiryDate, 
+        timezone
+      );
 
       // 计算当前剩余时间（基础计算）
       let expiryDate = new Date(subscription.expiryDate);
@@ -8252,20 +8449,13 @@ async function checkExpiringSubscriptions(env) {
       let diffMs = expiryDate.getTime() - currentTime.getTime();
       let diffHours = diffMs / MS_PER_HOUR;
       let diffMinutes = diffMs / (1000 * 60);
-
       // ==========================================
       // 核心逻辑：自动续费处理
       // ==========================================
       // 修复：对于分钟级和小时级订阅，使用精确的时间差判断是否过期
-      let isExpiredForRenewal = false;
-      if (subscription.periodUnit === 'minute' || subscription.periodUnit === 'hour') {
-        isExpiredForRenewal = diffMs < 0; // 使用精确的毫秒差
-      } else {
-        isExpiredForRenewal = daysDiff < 0; // 使用天数差
-      }
-
+      let isExpiredForRenewal = diffMs <= 0;
       if (isExpiredForRenewal && subscription.periodValue && subscription.periodUnit && subscription.autoRenew !== false) {
-        console.log(`[定时任务] 订阅 "${subscription.name}" 已过期，准备自动续费...`);
+        console.log(`[定时任务] 订阅:"${subscription.name}" 已过期，准备自动续费...`);
 
         const mode = subscription.subscriptionMode || 'cycle'; // cycle | reset
 
@@ -8323,7 +8513,7 @@ async function checkExpiringSubscriptions(env) {
 
         } while (daysDiff < 0); // 只要还过期，就继续加
 
-        console.log(`[定时任务] 续费完成. 新开始日: ${newStartDate.toISOString()}, 新到期日: ${newExpiryDate.toISOString()}`);
+        console.log(`[定时任务] 订阅:${subscription.name} 续费完成. 新开始日: ${newStartDate.toISOString()}, 新到期日: ${newExpiryDate.toISOString()}`);
         // 3. 生成支付记录
         const paymentRecord = {
           id: Date.now().toString() + '_' + Math.random().toString(36).substr(2, 9),
