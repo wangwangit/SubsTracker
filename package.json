@@ -2,7 +2,11 @@
   "name": "subscription-manager",
   "version": "2.0.0",
   "description": "订阅管理系统 - 基于CloudFlare Workers",
-  "main": "index.js",
+  "main": "src/index.js",
+  "scripts": {
+    "build": "echo 'No build step required for Workers runtime'",
+    "deploy": "wrangler deploy --env=\"\""
+  },
   "keywords": [
     "cloudflare-workers",
     "subscription-management",
