@@ -9,11 +9,8 @@ name = "subscription-manager"
 [env.staging]
 name = "subscription-manager-staging"
 
-# KV 命名空间配置
-[[kv_namespaces]]
-binding = "SUBSCRIPTIONS_KV"
-preview_id = "9df64d5ba39740e3b84b1435eabdae8f"
-id = "9df64d5ba39740e3b84b1435eabdae8f"
+# KV 命名空间配置（开源模板不预设固定 ID）
+# 部署后请在 Cloudflare 控制台创建并绑定：SUBSCRIPTIONS_KV
 
 # 定时任务配置 - 每小时检查一次（UTC）
 [triggers]

@@ -19,7 +19,7 @@
 > 注意：Cloudflare Deploy 按钮对“非默认分支”偶发不稳定；若出现 `An unknown error occurred`，请改用下方 CLI 方式部署（更稳定）。
 
 部署后请确认：
-- KV 绑定名：`SUBSCRIPTIONS_KV`
+- 在 Cloudflare 控制台创建并绑定 KV：`SUBSCRIPTIONS_KV`
 - Cron：`0 * * * *`（每小时）
 - 首次登录后修改默认账号密码
 
