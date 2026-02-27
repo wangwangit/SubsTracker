@@ -5,7 +5,9 @@
   "main": "src/index.js",
   "scripts": {
     "build": "echo 'No build step required for Workers runtime'",
-    "deploy": "wrangler deploy --env=\"\""
+    "setup": "node scripts/setup-kv.js",
+    "deploy": "npx wrangler deploy --env=\"\"",
+    "deploy:safe": "npm run setup && npm run deploy"
   },
   "keywords": [
     "cloudflare-workers",

@@ -9,8 +9,7 @@ name = "subscription-manager"
 [env.staging]
 name = "subscription-manager-staging"
 
-# KV 命名空间配置（开源模板不预设固定 ID）
-# 部署后请在 Cloudflare 控制台创建并绑定：SUBSCRIPTIONS_KV
+# KV 命名空间配置（默认模板不预设固定 ID，运行 npm run setup 自动生成）
 
 # 定时任务配置 - 每小时检查一次（UTC）
 [triggers]
