@@ -16,17 +16,20 @@
 
 [![Deploy to Cloudflare Workers](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/wangwangit/SubsTracker)
 
+> 注意：Cloudflare Deploy 按钮对“非默认分支”偶发不稳定；若出现 `An unknown error occurred`，请改用下方 CLI 方式部署（更稳定）。
+
 部署后请确认：
 - KV 绑定名：`SUBSCRIPTIONS_KV`
 - Cron：`0 * * * *`（每小时）
 - 首次登录后修改默认账号密码
 
-## 💻 CLI 部署
+## 💻 CLI 部署（推荐开发分支使用）
 
 ```bash
 npm install
 export CLOUDFLARE_API_TOKEN=你的Token
-npx wrangler deploy --env=""
+npm run deploy
+# 等价于：npx wrangler deploy --env=""
 ```
 
 ## 🔄 升级老版本
