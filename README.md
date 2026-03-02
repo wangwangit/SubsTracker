@@ -65,7 +65,19 @@
 
 ## 🧰 环境准备
 
-### 1) 安装 Node.js / npm
+### 1) 下载项目到本地（必须）
+
+本项目采用 Wrangler 本地部署模式，不是 Cloudflare Dashboard 直接连接 GitHub 自动部署。
+请先将项目下载到本地：
+
+```bash
+git clone https://github.com/wangwangit/SubsTracker.git
+cd SubsTracker
+```
+
+> ⚠️ 必须进入包含 **package.json** 的项目目录后才能执行之后的 **npm install**。
+
+### 2) 安装 Node.js / npm
 
 如果你电脑里没有 `npm`：
 
@@ -79,11 +91,11 @@ node -v
 npm -v
 ```
 
-### 2) 获取 Cloudflare API Token
+### 3) 获取 Cloudflare API Token
 
 1. 打开 Cloudflare Dashboard → **My Profile** → **API Tokens**
 2. 点击 **Create Token**
-3. 推荐使用自定义 Token（Custom Token）
+3. **强烈推荐**使用 Edit Cloudflare Workers 模版（Edit Cloudflare Workers）
 4. 权限至少包含：
    - Workers Scripts: Edit
    - Workers KV Storage: Edit
