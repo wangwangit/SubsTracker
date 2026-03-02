@@ -1,19 +1,21 @@
-name = "subscription-manager"
+name = "sub"
 main = "src/index.js"
 compatibility_date = "2024-01-01"
 compatibility_flags = ["nodejs_compat"]
 
 [env.production]
-name = "subscription-manager"
+name = "sub"
 
 [env.staging]
-name = "subscription-manager-staging"
+name = "sub-staging"
 
 # KV 命名空间配置（默认模板不预设固定 ID，运行 npm run setup 自动生成）
-
+[[kv_namespaces]]
+binding = "SUBSCRIPTIONS_KV"
+id = "23460e88ead340cea877d6a9d754677f"
 # 定时任务配置 - 每小时检查一次（UTC）
 [triggers]
-crons = ["0 * * * *"]
+crons = ["0 1 * * *"]
 
 # 环境变量（可选，也可以在 Cloudflare Dashboard 中设置）
 [vars]
