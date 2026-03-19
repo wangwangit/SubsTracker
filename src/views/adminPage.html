@@ -687,6 +687,23 @@
             class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"></textarea>
           <div class="error-message text-red-500"></div>
         </div>
+
+        <div>
+          <label for="webhookUrl" class="block text-sm font-medium text-gray-700 mb-1">
+            到期提醒 Webhook <span class="text-gray-400 text-xs ml-1">可选</span>
+          </label>
+          <div class="flex space-x-2">
+            <input type="text" id="webhookUrl" rows="2" placeholder="输入 cURL 格式请求，例如: curl -X POST https://example.com/api -d '{\"key\":\"value\"}' -H 'Content-Type: application/json'"
+              class="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"></input>
+            <button type="button" id="testWebhookBtn" title="测试 Webhook"
+              class="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-md text-sm font-medium transition-colors whitespace-nowrap">
+              <i class="fas fa-paper-plane mr-1"></i>测试
+            </button>
+          </div>
+          <p class="mt-1 text-xs text-gray-500">设置后，到期提醒时将自动调用此请求，支持 cURL 格式</p>
+          <div id="webhookTestResult" class="mt-2 text-sm hidden"></div>
+          <div id="webhookTestDetails" class="mt-2 p-3 bg-gray-50 border border-gray-200 rounded-md text-xs font-mono hidden" style="max-height: 200px; overflow-y: auto;"></div>
+        </div>
         
         <input type="hidden" id="subscriptionId">
 
@@ -2878,8 +2895,14 @@ const lunarBiz = {
         cancelBtn.dataset.bound = 'true';
         cancelBtn.addEventListener('click', () => {
           document.getElementById('subscriptionModal').classList.add('hidden');
-          document.body.classList.remove('overflow-hidden'); // 恢复背景滚动
+          document.body.classList.remove('overflow-hidden');
         });
+      }
+
+      const testWebhookBtn = document.getElementById('testWebhookBtn');
+      if (testWebhookBtn && !testWebhookBtn.dataset.bound) {
+        testWebhookBtn.dataset.bound = 'true';
+        testWebhookBtn.addEventListener('click', testWebhookRequest);
       }
 
       ['startDate', 'periodValue', 'periodUnit'].forEach(id => {
@@ -2909,6 +2932,222 @@ const lunarBiz = {
         }, 50);
       } catch (error) {
         console.error('初始化日期选择器失败:', error);
+      }
+    }
+
+    function parseCurlCommand(curlCommand) {
+      const cmd = curlCommand.trim();
+      if (!cmd.toLowerCase().startsWith('curl')) {
+        return null;
+      }
+
+      const result = {
+        method: 'GET',
+        url: '',
+        headers: {},
+        body: null
+      };
+
+      const tokens = [];
+      let current = '';
+      let inQuote = false;
+      let quoteChar = '';
+      let escaped = false;
+
+      for (let i = 3; i < cmd.length; i++) {
+        const char = cmd[i];
+
+        if (escaped) {
+          current += char;
+          escaped = false;
+          continue;
+        }
+
+        if (char === '\\') {
+          escaped = true;
+          current += char;
+          continue;
+        }
+
+        if ((char === '"' || char === "'") && !inQuote) {
+          inQuote = true;
+          quoteChar = char;
+          current += char;
+          continue;
+        }
+
+        if (char === quoteChar && inQuote) {
+          inQuote = false;
+          quoteChar = '';
+          current += char;
+          continue;
+        }
+
+        if (char === ' ' && !inQuote) {
+          if (current.trim()) {
+            tokens.push(current.trim());
+          }
+          current = '';
+          continue;
+        }
+
+        current += char;
+      }
+      if (current.trim()) {
+        tokens.push(current.trim());
+      }
+
+      let urlFound = false;
+      for (let i = 0; i < tokens.length; i++) {
+        const token = tokens[i];
+        const lowerToken = token.toLowerCase();
+
+        if (lowerToken === '-x' || lowerToken === '--request') {
+          if (i + 1 < tokens.length) {
+            result.method = tokens[i + 1].toUpperCase();
+            i++;
+          }
+          continue;
+        }
+
+        if (lowerToken === '-h' || lowerToken === '--header') {
+          if (i + 1 < tokens.length) {
+            let header = tokens[i + 1];
+            if ((header.startsWith("'") && header.endsWith("'")) || (header.startsWith('"') && header.endsWith('"')) || (header.startsWith('`') && header.endsWith('`'))) {
+              header = header.slice(1, -1);
+            }
+            const colonIndex = header.indexOf(':');
+            if (colonIndex > 0) {
+              const headerName = header.substring(0, colonIndex).trim();
+              const headerValue = header.substring(colonIndex + 1).trim();
+              result.headers[headerName] = headerValue;
+            }
+            i++;
+          }
+          continue;
+        }
+
+        if (lowerToken === '-d' || lowerToken === '--data' || lowerToken === '--data-raw') {
+          if (i + 1 < tokens.length) {
+            let data = tokens[i + 1];
+            if ((data.startsWith('"') && data.endsWith('"')) || (data.startsWith("'") && data.endsWith("'"))) {
+              data = data.slice(1, -1);
+            }
+            result.body = data;
+            if (!result.headers['Content-Type'] && !result.headers['content-type']) {
+            }
+            i++;
+          }
+          continue;
+        }
+
+        if (lowerToken === '-u' || lowerToken === '--user') {
+          if (i + 1 < tokens.length) {
+            const credentials = tokens[i + 1];
+            result.headers['Authorization'] = 'Basic ' + btoa(credentials);
+            i++;
+          }
+          continue;
+        }
+
+        if (token.startsWith('http://') || token.startsWith('https://') || token.startsWith("'http") || token.startsWith('"http') || token.startsWith("'https") || token.startsWith('"https') || token.startsWith('`http') || token.startsWith('`https')) {
+          let url = token;
+          if ((url.startsWith("'") && url.endsWith("'")) || (url.startsWith('"') && url.endsWith('"')) || (url.startsWith('`') && url.endsWith('`'))) {
+            url = url.slice(1, -1);
+          }
+          result.url = url;
+          urlFound = true;
+        }
+      }
+
+      if (!urlFound && tokens.length > 0) {
+        for (const token of tokens) {
+          if (token.startsWith('http://') || token.startsWith('https://')) {
+            let url = token;
+            if ((url.startsWith("'") && url.endsWith("'")) || (url.startsWith('"') && url.endsWith('"')) || (url.startsWith('`') && url.endsWith('`'))) {
+              url = url.slice(1, -1);
+            }
+            result.url = url;
+            break;
+          }
+        }
+      }
+
+      return result.url ? result : null;
+    }
+
+    async function testWebhookRequest() {
+      const webhookUrlInput = document.getElementById('webhookUrl');
+      const resultDiv = document.getElementById('webhookTestResult');
+      const detailsDiv = document.getElementById('webhookTestDetails');
+      const testBtn = document.getElementById('testWebhookBtn');
+
+      const curlCommand = webhookUrlInput.value.trim();
+
+      if (!curlCommand) {
+        resultDiv.textContent = '请输入 cURL 命令';
+        resultDiv.className = 'mt-2 text-sm text-yellow-600';
+        resultDiv.classList.remove('hidden');
+        return;
+      }
+
+      const originalContent = testBtn.innerHTML;
+      testBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i>测试中...';
+      testBtn.disabled = true;
+      resultDiv.classList.add('hidden');
+      detailsDiv.classList.add('hidden');
+
+      try {
+        const response = await fetch('/api/test-webhook', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ curl: curlCommand })
+        });
+
+        const result = await response.json();
+
+        let detailsHtml = '';
+        if (result.details) {
+          detailsHtml += '<div class="mb-2"><strong>请求信息：</strong>';
+          detailsHtml += `<div>URL: ${result.details.url || 'N/A'}</div>`;
+          detailsHtml += `<div>Method: ${result.details.method || 'N/A'}</div>`;
+          if (result.details.headers) {
+            detailsHtml += '<div>Headers:</div><pre class="ml-2">' + JSON.stringify(result.details.headers, null, 2) + '</pre>';
+          }
+          if (result.details.statusCode) {
+            detailsHtml += `<div>Status: ${result.details.statusCode}</div>`;
+          }
+          if (result.details.error) {
+            detailsHtml += `<div>Error: ${result.details.error}</div>`;
+          }
+          if (result.details.responseBody) {
+            const bodyStr = typeof result.details.responseBody === 'string'
+              ? result.details.responseBody
+              : JSON.stringify(result.details.responseBody, null, 2);
+            detailsHtml += '<div>Response:</div><pre class="ml-2">' + bodyStr + '</pre>';
+          }
+          detailsHtml += '</div>';
+        }
+
+        if (result.success) {
+          resultDiv.className = 'mt-2 text-sm text-green-600';
+          resultDiv.textContent = result.message;
+        } else {
+          resultDiv.className = 'mt-2 text-sm text-red-600';
+          resultDiv.textContent = result.message || '请求失败';
+        }
+
+        detailsDiv.innerHTML = detailsHtml;
+        detailsDiv.classList.remove('hidden');
+      } catch (error) {
+        resultDiv.textContent = `请求失败: ${error.message}`;
+        resultDiv.className = 'mt-2 text-sm text-red-600';
+        detailsDiv.innerHTML = '<div>Error: ' + error.message + '</div>';
+        detailsDiv.classList.remove('hidden');
+      } finally {
+        testBtn.innerHTML = originalContent;
+        testBtn.disabled = false;
+        resultDiv.classList.remove('hidden');
       }
     }
 
@@ -3002,9 +3241,9 @@ const lunarBiz = {
         name: document.getElementById('name').value.trim(),
         customType: document.getElementById('customType').value.trim(),
         category: document.getElementById('category').value.trim(),
-        subscriptionMode: document.getElementById('subscriptionMode').value, // 新增修改，表单提交时带上 subscriptionMode 字段
+        subscriptionMode: document.getElementById('subscriptionMode').value,
         notes: document.getElementById('notes').value.trim() || '',
-        currency: document.getElementById('currency').value, // 新增修改，表单提交时带上 currency 字段
+        currency: document.getElementById('currency').value,
         amount: document.getElementById('amount').value ? parseFloat(document.getElementById('amount').value) : null,
         isActive: document.getElementById('isActive').checked,
         autoRenew: document.getElementById('autoRenew').checked,
@@ -3016,7 +3255,8 @@ const lunarBiz = {
         reminderValue: reminderValue,
         reminderDays: reminderUnit === 'day' ? reminderValue : 0,
         reminderHours: reminderUnit === 'hour' ? reminderValue : undefined,
-        useLunar: document.getElementById('useLunar').checked
+        useLunar: document.getElementById('useLunar').checked,
+        webhookUrl: document.getElementById('webhookUrl').value.trim() || ''
       };
       
       const submitButton = e.target.querySelector('button[type="submit"]');
@@ -3105,6 +3345,7 @@ const lunarBiz = {
               : '0 = 仅在到期时提醒';
           }
           document.getElementById('useLunar').checked = !!subscription.useLunar;
+          document.getElementById('webhookUrl').value = subscription.webhookUrl || '';
           
           clearFieldErrors();
           loadLunarPreference();

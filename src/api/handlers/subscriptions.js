@@ -11,6 +11,7 @@ import {
 } from '../../data/subscriptions.js';
 import { getConfig } from '../../data/config.js';
 import { sendNotificationToAllChannels } from '../../services/notify/index.js';
+import { executeSubscriptionWebhook } from '../../services/notify/curlExecutor.js';
 import { lunarCalendar } from '../../core/lunar.js';
 import { formatTimeInTimezone, formatTimezoneDisplay } from '../../core/time.js';
 import { extractTagsFromSubscriptions } from '../utils.js';
@@ -44,6 +45,26 @@ async function testSingleSubscriptionNotification(id, env) {
 
     const categoryText = subscription.category ? subscription.category : '未分类';
 
+    let webhookResultText = '';
+    if (subscription.webhookUrl) {
+      try {
+        const webhookResult = await executeSubscriptionWebhook(subscription);
+        if (webhookResult.success) {
+          webhookResultText = `\n\n--- Webhook 执行结果 ---\n状态: 成功 (${webhookResult.statusCode})\nURL: ${webhookResult.url}`;
+          if (webhookResult.responseBody) {
+            const bodyStr = typeof webhookResult.responseBody === 'string'
+              ? webhookResult.responseBody
+              : JSON.stringify(webhookResult.responseBody);
+            webhookResultText += `\n响应: ${bodyStr.substring(0, 200)}${bodyStr.length > 200 ? '...' : ''}`;
+          }
+        } else {
+          webhookResultText = `\n\n--- Webhook 执行结果 ---\n状态: 失败\nURL: ${webhookResult.url || 'N/A'}\n错误: ${webhookResult.error || '未知错误'}`;
+        }
+      } catch (webhookError) {
+        webhookResultText = `\n\n--- Webhook 执行结果 ---\n状态: 异常\n错误: ${webhookError.message}`;
+      }
+    }
+
     const commonContent = `**订阅详情**
 类型: ${subscription.customType || '其他'}${amountText}
 分类: ${categoryText}
@@ -52,7 +73,7 @@ async function testSingleSubscriptionNotification(id, env) {
 自动续期: ${autoRenewText}
 备注: ${subscription.notes || '无'}
 发送时间: ${currentTime}
-当前时区: ${formatTimezoneDisplay(timezone)}`;
+当前时区: ${formatTimezoneDisplay(timezone)}${webhookResultText}`;
 
     const tags = extractTagsFromSubscriptions([subscription]);
     const notifyResult = await sendNotificationToAllChannels(title, commonContent, config, '[手动测试]', {

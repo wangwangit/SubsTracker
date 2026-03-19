@@ -104,6 +104,7 @@ async function createSubscription(subscription, env) {
       isActive: subscription.isActive !== false,
       autoRenew: subscription.autoRenew !== false,
       useLunar: useLunar,
+      webhookUrl: subscription.webhookUrl || '',
       createdAt: new Date().toISOString()
     };
 
@@ -212,6 +213,7 @@ async function updateSubscription(id, subscription, env) {
       isActive: subscription.isActive !== undefined ? subscription.isActive : subscriptions[index].isActive,
       autoRenew: subscription.autoRenew !== undefined ? subscription.autoRenew : (subscriptions[index].autoRenew !== undefined ? subscriptions[index].autoRenew : true),
       useLunar: useLunar,
+      webhookUrl: subscription.webhookUrl !== undefined ? subscription.webhookUrl : (subscriptions[index].webhookUrl || ''),
       updatedAt: new Date().toISOString()
     };
 

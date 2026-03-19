@@ -5,6 +5,7 @@ import { handleThirdPartyNotify } from './handlers/notify.js';
 import { handleSubscriptions } from './handlers/subscriptions.js';
 import { getConfig } from '../data/config.js';
 import { handleTestNotification } from './handlers/test-notification.js';
+import { handleTestWebhook } from './handlers/test-webhook.js';
 
 async function handleApiRequest(request, env) {
   const url = new URL(request.url);
@@ -40,6 +41,10 @@ async function handleApiRequest(request, env) {
 
   if (path === '/test-notification' && method === 'POST') {
     return handleTestNotification(request, env);
+  }
+
+  if (path === '/test-webhook' && method === 'POST') {
+    return handleTestWebhook(request, env);
   }
 
   const subscriptionResponse = await handleSubscriptions(request, env, path);

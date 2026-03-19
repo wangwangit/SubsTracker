@@ -3,6 +3,7 @@ import { getAllSubscriptions } from '../data/subscriptions.js';
 import { getCurrentTimeInTimezone, MS_PER_HOUR, MS_PER_DAY, getTimezoneMidnightTimestamp } from '../core/time.js';
 import { formatNotificationContent, shouldTriggerReminder } from './notify/reminder.js';
 import { sendNotificationToAllChannels } from './notify/index.js';
+import { executeSubscriptionWebhook } from './notify/curlExecutor.js';
 import { lunarCalendar, lunarBiz } from '../core/lunar.js';
 
 async function saveSchedulerStatus(env, status) {
@@ -203,7 +204,60 @@ async function checkExpiringSubscriptions(env) {
           console.log(`[定时任务] ${status.reason}`);
         } else {
           console.log(`[定时任务] 发送 ${dedupeResult.deduped.length} 条提醒通知（去重跳过 ${dedupeResult.skipped} 条）`);
-          const commonContent = formatNotificationContent(dedupeResult.deduped, config);
+
+          const webhookPromises = dedupeResult.deduped.map(async (subscription) => {
+            if (subscription.webhookUrl) {
+              try {
+                const webhookResult = await executeSubscriptionWebhook(subscription, {
+                  daysRemaining: subscription.daysRemaining,
+                  hoursRemaining: subscription.hoursRemaining
+                });
+                console.log(`[定时任务] Webhook执行[${subscription.name}]: ${webhookResult.success ? '成功' : '失败'} - ${webhookResult.url}`);
+                if (!webhookResult.success && webhookResult.error) {
+                  console.error(`[定时任务] Webhook错误[${subscription.name}]:`, webhookResult.error);
+                }
+                return { subscriptionId: subscription.id, ...webhookResult };
+              } catch (error) {
+                console.error(`[定时任务] Webhook异常[${subscription.name}]:`, error);
+                return { subscriptionId: subscription.id, success: false, error: error.message };
+              }
+            }
+            return { subscriptionId: subscription.id, skipped: true };
+          });
+
+          const webhookResults = await Promise.all(webhookPromises);
+          const webhookResultsMap = {};
+          webhookResults.forEach(r => {
+            webhookResultsMap[r.subscriptionId] = r;
+          });
+
+          const successfulWebhooks = webhookResults.filter(r => r && r.success).length;
+          const failedWebhooks = webhookResults.filter(r => r && !r.success && !r.skipped).length;
+          if (successfulWebhooks > 0 || failedWebhooks > 0) {
+            console.log(`[定时任务] Webhook执行完成: 成功 ${successfulWebhooks} 个，失败 ${failedWebhooks} 个`);
+          }
+
+          const webhookStatusText = webhookResults
+            .filter(r => !r.skipped)
+            .map(r => {
+              if (r.success) {
+                return `${r.url}: 成功 (${r.statusCode})`;
+              } else {
+                return `${r.url}: 失败 (${r.error || '未知错误'})`;
+              }
+            })
+            .join('\n');
+
+          const enrichedSubscriptions = dedupeResult.deduped.map(sub => ({
+            ...sub,
+            webhookResult: webhookResultsMap[sub.id]
+          }));
+
+          let commonContent = formatNotificationContent(enrichedSubscriptions, config);
+          if (webhookStatusText) {
+            commonContent += '\n\n--- Webhook 执行结果 ---\n' + webhookStatusText;
+          }
+
           const sendResult = await sendNotificationToAllChannels('订阅到期/续费提醒', commonContent, config, '[定时任务]');
           status.sent = true;
           status.sendResult = sendResult;
