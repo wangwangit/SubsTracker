@@ -11,7 +11,9 @@ const SECRET_FIELDS = [
   'RESEND_API_KEY',
   'BARK_DEVICE_KEY',
   'THIRD_PARTY_API_TOKEN',
-  'GOTIFY_APP_TOKEN'
+  'GOTIFY_APP_TOKEN',
+  'SERVERCHAN_SENDKEY',
+  'PUSHPLUS_TOKEN'
 ];
 
 function isConfiguredSecret(value) {
@@ -107,6 +109,12 @@ async function handleUpdateConfig(request, env) {
 
       GOTIFY_SERVER_URL: (newConfig.GOTIFY_SERVER_URL || '').trim(),
       GOTIFY_APP_TOKEN: mergeSecretField(config, newConfig, 'GOTIFY_APP_TOKEN', clearSecretFields),
+
+      SERVERCHAN_SENDKEY: mergeSecretField(config, newConfig, 'SERVERCHAN_SENDKEY', clearSecretFields),
+
+      PUSHPLUS_TOKEN: mergeSecretField(config, newConfig, 'PUSHPLUS_TOKEN', clearSecretFields),
+      PUSHPLUS_TOPIC: (newConfig.PUSHPLUS_TOPIC || '').trim(),
+      PUSHPLUS_CHANNEL: (newConfig.PUSHPLUS_CHANNEL || '').trim(),
 
       ENABLED_NOTIFIERS: newConfig.ENABLED_NOTIFIERS || ['notifyx'],
       TIMEZONE: newConfig.TIMEZONE || config.TIMEZONE || 'UTC',

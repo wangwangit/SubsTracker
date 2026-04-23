@@ -30,7 +30,11 @@ const DEFAULT_CONFIG = {
   DEBUG_LOGS: false,
   PAYMENT_HISTORY_LIMIT: 100,
   GOTIFY_SERVER_URL: '',
-  GOTIFY_APP_TOKEN: ''
+  GOTIFY_APP_TOKEN: '',
+  SERVERCHAN_SENDKEY: '',
+  PUSHPLUS_TOKEN: '',
+  PUSHPLUS_TOPIC: '',
+  PUSHPLUS_CHANNEL: ''
 };
 
 async function getConfig(env) {

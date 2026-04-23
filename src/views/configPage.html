@@ -237,6 +237,14 @@
                 <input type="checkbox" name="enabledNotifiers" value="gotify" class="form-checkbox h-4 w-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500">
                 <span class="ml-2 text-sm text-gray-700">Gotify</span>
               </label>
+              <label class="inline-flex items-center">
+                <input type="checkbox" name="enabledNotifiers" value="serverchan" class="form-checkbox h-4 w-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500">
+                <span class="ml-2 text-sm text-gray-700">Server酱</span>
+              </label>
+              <label class="inline-flex items-center">
+                <input type="checkbox" name="enabledNotifiers" value="pushplus" class="form-checkbox h-4 w-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500">
+                <span class="ml-2 text-sm text-gray-700">PushPlus</span>
+              </label>
             </div>
             <div class="mt-2 flex flex-wrap gap-4">
               <a href="https://www.notifyx.cn/" target="_blank" class="text-indigo-600 hover:text-indigo-800 text-sm">
@@ -253,6 +261,12 @@
               </a>
               <a href="https://apps.apple.com/cn/app/bark-customed-notifications/id1403753865" target="_blank" class="text-indigo-600 hover:text-indigo-800 text-sm">
                 <i class="fas fa-external-link-alt ml-1"></i> Bark iOS应用
+              </a>
+              <a href="https://sct.ftqq.com/" target="_blank" class="text-indigo-600 hover:text-indigo-800 text-sm">
+                <i class="fas fa-external-link-alt ml-1"></i> Server酱官网
+              </a>
+              <a href="https://www.pushplus.plus/" target="_blank" class="text-indigo-600 hover:text-indigo-800 text-sm">
+                <i class="fas fa-external-link-alt ml-1"></i> PushPlus官网
               </a>
             </div>
           </div>
@@ -517,6 +531,64 @@
               </button>
             </div>
           </div>
+
+          <div id="serverchanConfig" class="config-section">
+            <h4 class="text-md font-medium text-gray-900 mb-3">Server酱 配置</h4>
+            <div class="grid grid-cols-1 gap-4 mb-4">
+              <div>
+                <label for="serverchanSendKey" class="block text-sm font-medium text-gray-700">SendKey</label>
+                <div class="mt-1 flex flex-col sm:flex-row sm:items-center gap-3">
+                  <input type="text" id="serverchanSendKey" placeholder="留空表示不修改；输入新值将更新" class="flex-1 border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+                  <button type="button" id="clearServerchanSendKey" class="btn-warning text-white px-4 py-2 rounded-md text-sm font-medium whitespace-nowrap">
+                    <i class="fas fa-eraser mr-2"></i>清空
+                  </button>
+                </div>
+                <p id="SERVERCHAN_SENDKEYStatus" class="mt-1 text-xs text-gray-500">加载中...</p>
+                <p class="mt-1 text-sm text-gray-500">从 <a href="https://sct.ftqq.com/" target="_blank" class="text-indigo-600 hover:text-indigo-800">Server酱</a> 获取 SendKey</p>
+              </div>
+            </div>
+            <div class="flex justify-end">
+              <button type="button" id="testServerchanBtn" class="btn-secondary text-white px-4 py-2 rounded-md text-sm font-medium">
+                <i class="fas fa-paper-plane mr-2"></i>测试 Server酱 通知
+              </button>
+            </div>
+          </div>
+
+          <div id="pushplusConfig" class="config-section">
+            <h4 class="text-md font-medium text-gray-900 mb-3">PushPlus 配置</h4>
+            <div class="grid grid-cols-1 gap-4 mb-4">
+              <div>
+                <label for="pushplusToken" class="block text-sm font-medium text-gray-700">Token</label>
+                <div class="mt-1 flex flex-col sm:flex-row sm:items-center gap-3">
+                  <input type="text" id="pushplusToken" placeholder="留空表示不修改；输入新值将更新" class="flex-1 border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+                  <button type="button" id="clearPushplusToken" class="btn-warning text-white px-4 py-2 rounded-md text-sm font-medium whitespace-nowrap">
+                    <i class="fas fa-eraser mr-2"></i>清空
+                  </button>
+                </div>
+                <p id="PUSHPLUS_TOKENStatus" class="mt-1 text-xs text-gray-500">加载中...</p>
+              </div>
+              <div>
+                <label for="pushplusTopic" class="block text-sm font-medium text-gray-700">群组编码 Topic（可选）</label>
+                <input type="text" id="pushplusTopic" placeholder="留空则发送到个人渠道" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+              </div>
+              <div>
+                <label for="pushplusChannel" class="block text-sm font-medium text-gray-700">渠道（可选）</label>
+                <select id="pushplusChannel" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+                  <option value="">默认</option>
+                  <option value="wechat">微信公众号</option>
+                  <option value="mail">邮件</option>
+                  <option value="sms">短信</option>
+                  <option value="webhook">Webhook</option>
+                </select>
+                <p class="mt-1 text-sm text-gray-500">具体可用渠道以 PushPlus 平台支持情况为准</p>
+              </div>
+            </div>
+            <div class="flex justify-end">
+              <button type="button" id="testPushplusBtn" class="btn-secondary text-white px-4 py-2 rounded-md text-sm font-medium">
+                <i class="fas fa-paper-plane mr-2"></i>测试 PushPlus 通知
+              </button>
+            </div>
+          </div>
         </div>
 
         <div class="flex justify-end">
@@ -572,6 +644,8 @@
       setSecretStatus('BARK_DEVICE_KEY', cfg.BARK_DEVICE_KEY ? '已配置（已隐藏）' : '未配置');
       setSecretStatus('THIRD_PARTY_API_TOKEN', cfg.THIRD_PARTY_API_TOKEN ? '已配置（已隐藏）' : '未配置');
       setSecretStatus('GOTIFY_APP_TOKEN', cfg.GOTIFY_APP_TOKEN ? '已配置（已隐藏）' : '未配置');
+      setSecretStatus('SERVERCHAN_SENDKEY', cfg.SERVERCHAN_SENDKEY ? '已配置（已隐藏）' : '未配置');
+      setSecretStatus('PUSHPLUS_TOKEN', cfg.PUSHPLUS_TOKEN ? '已配置（已隐藏）' : '未配置');
     }
 
     function wireSecretInput(inputId, key) {
@@ -629,6 +703,8 @@
         document.getElementById('barkServer').value = config.BARK_SERVER || 'https://api.day.app';
         document.getElementById('barkIsArchive').checked = config.BARK_IS_ARCHIVE === 'true';
         document.getElementById('gotifyServerUrl').value = config.GOTIFY_SERVER_URL || '';
+        document.getElementById('pushplusTopic').value = config.PUSHPLUS_TOPIC || '';
+        document.getElementById('pushplusChannel').value = config.PUSHPLUS_CHANNEL || '';
 
         // 敏感字段：清空输入框（不回显真实值）
         document.getElementById('tgBotToken').value = '';
@@ -640,6 +716,8 @@
         document.getElementById('barkDeviceKey').value = '';
         document.getElementById('thirdPartyToken').value = '';
         document.getElementById('gotifyAppToken').value = '';
+        document.getElementById('serverchanSendKey').value = '';
+        document.getElementById('pushplusToken').value = '';
 
         window.SECRET_CONFIGURED = {
           TG_BOT_TOKEN: config.TG_BOT_TOKEN_CONFIGURED === true,
@@ -650,7 +728,9 @@
           RESEND_API_KEY: config.RESEND_API_KEY_CONFIGURED === true,
           BARK_DEVICE_KEY: config.BARK_DEVICE_KEY_CONFIGURED === true,
           THIRD_PARTY_API_TOKEN: config.THIRD_PARTY_API_TOKEN_CONFIGURED === true,
-          GOTIFY_APP_TOKEN: config.GOTIFY_APP_TOKEN_CONFIGURED === true
+          GOTIFY_APP_TOKEN: config.GOTIFY_APP_TOKEN_CONFIGURED === true,
+          SERVERCHAN_SENDKEY: config.SERVERCHAN_SENDKEY_CONFIGURED === true,
+          PUSHPLUS_TOKEN: config.PUSHPLUS_TOKEN_CONFIGURED === true
         };
 
         updateAllSecretStatus();
@@ -735,9 +815,11 @@
       const emailConfig = document.getElementById('emailConfig');
       const barkConfig = document.getElementById('barkConfig');
       const gotifyConfig = document.getElementById('gotifyConfig');
+      const serverchanConfig = document.getElementById('serverchanConfig');
+      const pushplusConfig = document.getElementById('pushplusConfig');
 
       // 重置所有配置区域
-      [telegramConfig, notifyxConfig, webhookConfig, wechatbotConfig, emailConfig, barkConfig, gotifyConfig].forEach(config => {
+      [telegramConfig, notifyxConfig, webhookConfig, wechatbotConfig, emailConfig, barkConfig, gotifyConfig, serverchanConfig, pushplusConfig].forEach(config => {
         config.classList.remove('active', 'inactive');
         config.classList.add('inactive');
       });
@@ -765,6 +847,12 @@
         } else if (type === 'gotify') {
           gotifyConfig.classList.remove('inactive');
           gotifyConfig.classList.add('active');
+        } else if (type === 'serverchan') {
+          serverchanConfig.classList.remove('inactive');
+          serverchanConfig.classList.add('active');
+        } else if (type === 'pushplus') {
+          pushplusConfig.classList.remove('inactive');
+          pushplusConfig.classList.add('active');
         }
       });
     }
@@ -802,6 +890,8 @@
         BARK_DEVICE_KEY: document.getElementById('barkDeviceKey').value.trim(),
         THIRD_PARTY_API_TOKEN: document.getElementById('thirdPartyToken').value.trim(),
         GOTIFY_APP_TOKEN: document.getElementById('gotifyAppToken').value.trim(),
+        SERVERCHAN_SENDKEY: document.getElementById('serverchanSendKey').value.trim(),
+        PUSHPLUS_TOKEN: document.getElementById('pushplusToken').value.trim(),
 
         // 非敏感字段正常提交
         TG_CHAT_ID: document.getElementById('tgChatId').value.trim(),
@@ -817,6 +907,8 @@
         BARK_SERVER: document.getElementById('barkServer').value.trim() || 'https://api.day.app',
         BARK_IS_ARCHIVE: document.getElementById('barkIsArchive').checked.toString(),
         GOTIFY_SERVER_URL: document.getElementById('gotifyServerUrl').value.trim(),
+        PUSHPLUS_TOPIC: document.getElementById('pushplusTopic').value.trim(),
+        PUSHPLUS_CHANNEL: document.getElementById('pushplusChannel').value.trim(),
         ENABLED_NOTIFIERS: enabledNotifiers,
         TIMEZONE: document.getElementById('timezone').value.trim(),
 
@@ -897,7 +989,9 @@
                       type === 'wechatbot' ? 'testWechatBotBtn' :
                       type === 'email' ? 'testEmailBtn' :
                       type === 'bark' ? 'testBarkBtn' :
-                      type === 'gotify' ? 'testGotifyBtn' : 'testWebhookBtn';
+                      type === 'gotify' ? 'testGotifyBtn' :
+                      type === 'serverchan' ? 'testServerchanBtn' :
+                      type === 'pushplus' ? 'testPushplusBtn' : 'testWebhookBtn';
       const button = document.getElementById(buttonId);
       if (!button) {
         showToast('测试按钮不存在，请刷新页面后重试', 'error');
@@ -909,7 +1003,9 @@
                           type === 'wechatbot' ? '企业微信机器人' :
                           type === 'email' ? '邮件通知' :
                           type === 'bark' ? 'Bark' :
-                          type === 'gotify' ? 'Gotify' : 'Webhook 通知';
+                          type === 'gotify' ? 'Gotify' :
+                          type === 'serverchan' ? 'Server酱' :
+                          type === 'pushplus' ? 'PushPlus' : 'Webhook 通知';
 
       button.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>测试中...';
       button.disabled = true;
@@ -958,6 +1054,14 @@
           button.disabled = false;
           return;
         }
+      } else if (type === 'serverchan') {
+        const key = document.getElementById('serverchanSendKey').value.trim();
+        if (key) config.SERVERCHAN_SENDKEY = key;
+      } else if (type === 'pushplus') {
+        const token = document.getElementById('pushplusToken').value.trim();
+        if (token) config.PUSHPLUS_TOKEN = token;
+        config.PUSHPLUS_TOPIC = document.getElementById('pushplusTopic').value.trim();
+        config.PUSHPLUS_CHANNEL = document.getElementById('pushplusChannel').value.trim();
       }
 
       try {
@@ -1017,6 +1121,14 @@
       testNotification('gotify');
     });
 
+    document.getElementById('testServerchanBtn').addEventListener('click', () => {
+      testNotification('serverchan');
+    });
+
+    document.getElementById('testPushplusBtn').addEventListener('click', () => {
+      testNotification('pushplus');
+    });
+
     document.getElementById('generateThirdPartyToken').addEventListener('click', () => {
       try {
         // 生成 32 位随机令牌，避免出现特殊字符，方便写入 URL
@@ -1045,6 +1157,8 @@
       wireSecretInput('barkDeviceKey', 'BARK_DEVICE_KEY');
       wireSecretInput('thirdPartyToken', 'THIRD_PARTY_API_TOKEN');
       wireSecretInput('gotifyAppToken', 'GOTIFY_APP_TOKEN');
+      wireSecretInput('serverchanSendKey', 'SERVERCHAN_SENDKEY');
+      wireSecretInput('pushplusToken', 'PUSHPLUS_TOKEN');
 
       wireClearSecretButton('clearTgBotToken', 'tgBotToken', 'TG_BOT_TOKEN');
       wireClearSecretButton('clearNotifyxApiKey', 'notifyxApiKey', 'NOTIFYX_API_KEY');
@@ -1055,6 +1169,8 @@
       wireClearSecretButton('clearBarkDeviceKey', 'barkDeviceKey', 'BARK_DEVICE_KEY');
       wireClearSecretButton('clearThirdPartyToken', 'thirdPartyToken', 'THIRD_PARTY_API_TOKEN');
       wireClearSecretButton('clearGotifyAppToken', 'gotifyAppToken', 'GOTIFY_APP_TOKEN');
+      wireClearSecretButton('clearServerchanSendKey', 'serverchanSendKey', 'SERVERCHAN_SENDKEY');
+      wireClearSecretButton('clearPushplusToken', 'pushplusToken', 'PUSHPLUS_TOKEN');
 
       loadConfig();
     });

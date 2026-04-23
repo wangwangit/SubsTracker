@@ -29,6 +29,8 @@
 - **企业微信机器人**：支持企业微信群机器人通知
 - **邮件通知**：基于 Resend 的邮件服务
 - **Bark**：支持 iOS Bark 推送
+- **Server酱**：支持 Server酱 3 推送
+- **PushPlus**：支持 PushPlus 推送
 
 ### 🌙 农历功能
 - **农历转换**：支持 1900-2100 年农历转换
@@ -167,6 +169,9 @@ npx wrangler kv key get --binding=SUBSCRIPTIONS_KV --env="" --remote subscriptio
 
 首次登录后请立即在系统配置中修改账号密码。
 
+## 忘记密码
+请前往CloudFlare的KV管理页面,修改KV SUBSCRIPTIONS_KV 下面的config中的内容即可!
+
 ---
 
 ## 🔧 通知渠道配置
@@ -190,6 +195,15 @@ npx wrangler kv key get --binding=SUBSCRIPTIONS_KV --env="" --remote subscriptio
 - **服务器地址**：默认 `https://api.day.app`，也可用自建服务器
 - **设备 Key**：在 Bark App 内复制
 - **历史记录**：勾选“保存推送”后可保留推送历史
+
+### Server酱
+- **SendKey**：从 [Server酱官网](https://sct.ftqq.com/) 获取
+- 使用 Server酱 3 接口发送 Markdown 格式通知
+
+### PushPlus
+- **Token**：从 [PushPlus 官网](https://www.pushplus.plus/) 获取
+- **Topic**：可选，配置后可发送到指定群组
+- **Channel**：可选，可在系统配置中选择默认、微信公众号、邮件、短信或 Webhook 渠道
 
 ### 邮件通知 (Resend)
 - **API Key**: 从 [Resend 官方教程](https://developers.cloudflare.com/workers/tutorials/send-emails-with-resend/) 获取

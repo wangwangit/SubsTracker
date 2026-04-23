@@ -5,6 +5,8 @@ import { sendWechatBotNotification } from './wechat.js';
 import { sendEmailNotification } from './email.js';
 import { sendBarkNotification } from './bark.js';
 import { sendGotifyNotification } from './gotify.js';
+import { sendServerChanNotification } from './serverchan.js';
+import { sendPushPlusNotification } from './pushplus.js';
 
 async function sendNotificationToAllChannels(title, commonContent, config, logPrefix = '[定时任务]', options = {}) {
   const metadata = options.metadata || {};
@@ -77,6 +79,20 @@ async function sendNotificationToAllChannels(title, commonContent, config, logPr
     result.channelResults.gotify = success;
     success ? result.successCount++ : result.failedCount++;
     console.log(`${logPrefix} 发送Gotify通知 ${success ? '成功' : '失败'}`);
+  }
+  if (enabledNotifiers.includes('serverchan')) {
+    result.attempted += 1;
+    const success = await sendServerChanNotification(title, commonContent, config);
+    result.channelResults.serverchan = success;
+    success ? result.successCount++ : result.failedCount++;
+    console.log(`${logPrefix} 发送Server酱通知 ${success ? '成功' : '失败'}`);
+  }
+  if (enabledNotifiers.includes('pushplus')) {
+    result.attempted += 1;
+    const success = await sendPushPlusNotification(title, commonContent, config);
+    result.channelResults.pushplus = success;
+    success ? result.successCount++ : result.failedCount++;
+    console.log(`${logPrefix} 发送PushPlus通知 ${success ? '成功' : '失败'}`);
   }
 
   return result;

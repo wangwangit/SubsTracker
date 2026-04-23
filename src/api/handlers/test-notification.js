@@ -7,6 +7,8 @@ import { sendWechatBotNotification } from '../../services/notify/wechat.js';
 import { sendEmailNotification } from '../../services/notify/email.js';
 import { sendBarkNotification } from '../../services/notify/bark.js';
 import { sendGotifyNotification } from '../../services/notify/gotify.js';
+import { sendServerChanNotification } from '../../services/notify/serverchan.js';
+import { sendPushPlusNotification } from '../../services/notify/pushplus.js';
 
 async function handleTestNotification(request, env) {
   try {
@@ -16,7 +18,7 @@ async function handleTestNotification(request, env) {
     let message = '';
 
     const type = typeof body.type === 'string' ? body.type.trim() : '';
-    const supportedTypes = ['telegram', 'notifyx', 'webhook', 'wechatbot', 'email', 'bark', 'gotify'];
+    const supportedTypes = ['telegram', 'notifyx', 'webhook', 'wechatbot', 'email', 'bark', 'gotify', 'serverchan', 'pushplus'];
 
     if (!type) {
       return new Response(
@@ -135,6 +137,34 @@ async function handleTestNotification(request, env) {
 
       success = await sendGotifyNotification(title, content, testConfig);
       message = success ? 'Gotify通知发送成功' : 'Gotify通知发送失败，请检查配置';
+    } else if (type === 'serverchan') {
+      const testConfig = {
+        ...config,
+        SERVERCHAN_SENDKEY: (typeof body.SERVERCHAN_SENDKEY === 'string' && body.SERVERCHAN_SENDKEY.trim().length > 0)
+          ? body.SERVERCHAN_SENDKEY.trim()
+          : config.SERVERCHAN_SENDKEY
+      };
+
+      const title = '测试通知';
+      const content = '这是一条测试通知，用于验证Server酱通知功能是否正常工作。\n\n发送时间: ' + formatBeijingTime();
+
+      success = await sendServerChanNotification(title, content, testConfig);
+      message = success ? 'Server酱通知发送成功' : 'Server酱通知发送失败，请检查配置';
+    } else if (type === 'pushplus') {
+      const testConfig = {
+        ...config,
+        PUSHPLUS_TOKEN: (typeof body.PUSHPLUS_TOKEN === 'string' && body.PUSHPLUS_TOKEN.trim().length > 0)
+          ? body.PUSHPLUS_TOKEN.trim()
+          : config.PUSHPLUS_TOKEN,
+        PUSHPLUS_TOPIC: body.PUSHPLUS_TOPIC || config.PUSHPLUS_TOPIC,
+        PUSHPLUS_CHANNEL: body.PUSHPLUS_CHANNEL || config.PUSHPLUS_CHANNEL
+      };
+
+      const title = '测试通知';
+      const content = '这是一条测试通知，用于验证PushPlus通知功能是否正常工作。\n\n发送时间: ' + formatBeijingTime();
+
+      success = await sendPushPlusNotification(title, content, testConfig);
+      message = success ? 'PushPlus通知发送成功' : 'PushPlus通知发送失败，请检查配置';
     }
 
     return new Response(
