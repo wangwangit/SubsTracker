@@ -89,7 +89,13 @@ function formatNotificationContent(subscriptions, config) {
 
     const calendarType = sub.useLunar ? '农历' : '公历';
     const autoRenewText = sub.autoRenew ? '是' : '否';
-    const amountText = sub.amount ? `\n金额: ¥${sub.amount.toFixed(2)}/周期` : '';
+    const currencySymbols = {
+      CNY: '¥', USD: '$', HKD: 'HK$', TWD: 'NT$',
+      JPY: '¥', EUR: '€', GBP: '£', KRW: '₩', TRY: '₺'
+    };
+    const amountConfigured = sub.amount !== null && sub.amount !== undefined && !Number.isNaN(Number(sub.amount));
+    const amountCurrency = currencySymbols[sub.currency || 'CNY'] || '¥';
+    const amountText = amountConfigured ? `\n金额: ${amountCurrency}${Number(sub.amount).toFixed(2)}/周期` : '';
 
     const subscriptionContent = `${statusEmoji} **${sub.name}**
 类型: ${typeText} ${periodText}

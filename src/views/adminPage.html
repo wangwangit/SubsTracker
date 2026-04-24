@@ -1276,6 +1276,14 @@ const lunarBiz = {
       });
     }
 
+    function getCurrencySymbol(currency) {
+      const currencySymbols = {
+        'CNY': '¥', 'USD': '$', 'HKD': 'HK$', 'TWD': 'NT$',
+        'JPY': '¥', 'EUR': '€', 'GBP': '£', 'KRW': '₩', 'TRY': '₺'
+      };
+      return currencySymbols[currency] || '¥';
+    }
+
     function renderSubscriptionTable() {
       const tbody = document.getElementById('subscriptionsBody');
       if (!tbody) {
@@ -1494,10 +1502,11 @@ const lunarBiz = {
         };
         const currencySymbol = currencySymbols[subscription.currency] || '¥';
 
-        const amountHtml = subscription.amount
+        const hasAmount = subscription.amount !== null && subscription.amount !== undefined && !Number.isNaN(Number(subscription.amount));
+        const amountHtml = hasAmount
           ? '<div class="flex items-center gap-1">' +
               '<span class="text-xs text-gray-500 font-bold">' + currencySymbol + '</span>' +
-              '<span class="text-sm font-medium text-gray-900">' + subscription.amount.toFixed(2) + '</span>' +
+              '<span class="text-sm font-medium text-gray-900">' + Number(subscription.amount).toFixed(2) + '</span>' +
             '</div>'
           : '<span class="text-xs text-gray-400">未设置</span>';
 
@@ -1706,7 +1715,7 @@ const lunarBiz = {
             }
         }
 
-        const defaultAmount = subscription.amount || 0;
+        const defaultAmount = subscription.amount !== null && subscription.amount !== undefined ? subscription.amount : 0;
         
         // 获取动态货币符号
         const currencySymbols = {
@@ -1997,7 +2006,7 @@ const lunarBiz = {
                             </div>
                             <div class="flex items-center gap-3">
                                 <div class="text-right">
-                                    <div class="text-lg font-bold text-gray-900">¥${payment.amount.toFixed(2)}</div>
+                                    <div class="text-lg font-bold text-gray-900">${getCurrencySymbol(payment.currency || subscription.currency)}${Number(payment.amount || 0).toFixed(2)}</div>
                                 </div>
                                 <div class="flex gap-1">
                                     <button onclick="editPaymentRecord('${subscription.id}', '${payment.id}')"
@@ -2034,7 +2043,7 @@ const lunarBiz = {
                         <div class="grid grid-cols-2 gap-4">
                             <div class="text-center">
                                 <div class="text-sm text-gray-600">累计支出</div>
-                                <div class="text-2xl font-bold text-purple-600">¥${totalAmount.toFixed(2)}</div>
+                                <div class="text-2xl font-bold text-purple-600">${getCurrencySymbol(subscription.currency)}${totalAmount.toFixed(2)}</div>
                             </div>
                             <div class="text-center">
                                 <div class="text-sm text-gray-600">支付次数</div>
@@ -2148,7 +2157,7 @@ const lunarBiz = {
                         </div>
 
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">支付金额 (¥)</label>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">支付金额 (${subscription.currency || 'CNY'} ${getCurrencySymbol(payment.currency || subscription.currency)})</label>
                             <input type="number" id="editPaymentAmount" value="${payment.amount}" step="0.01" min="0"
                                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
                         </div>
@@ -2192,9 +2201,11 @@ const lunarBiz = {
         const paymentId = form.dataset.paymentId;
         const confirmBtn = document.getElementById('confirmEditBtn');
 
+        const currentSubscription = subscriptionsCache.find(item => item.id === subscriptionId);
         const paymentData = {
             date: document.getElementById('editPaymentDate').value,
             amount: parseFloat(document.getElementById('editPaymentAmount').value) || 0,
+            currency: currentSubscription?.currency || 'CNY',
             note: document.getElementById('editPaymentNote').value
         };
 
@@ -3005,7 +3016,7 @@ const lunarBiz = {
         subscriptionMode: document.getElementById('subscriptionMode').value, // 新增修改，表单提交时带上 subscriptionMode 字段
         notes: document.getElementById('notes').value.trim() || '',
         currency: document.getElementById('currency').value, // 新增修改，表单提交时带上 currency 字段
-        amount: document.getElementById('amount').value ? parseFloat(document.getElementById('amount').value) : null,
+        amount: document.getElementById('amount').value === '' ? null : parseFloat(document.getElementById('amount').value),
         isActive: document.getElementById('isActive').checked,
         autoRenew: document.getElementById('autoRenew').checked,
         startDate: document.getElementById('startDate').value,
@@ -3069,7 +3080,7 @@ const lunarBiz = {
           document.getElementById('customType').value = subscription.customType || '';
           document.getElementById('category').value = subscription.category || '';
           document.getElementById('notes').value = subscription.notes || '';
-          document.getElementById('amount').value = subscription.amount || '';
+          document.getElementById('amount').value = subscription.amount !== null && subscription.amount !== undefined ? subscription.amount : '';
           document.getElementById('currency').value = subscription.currency || 'CNY'; // 默认设置为 CNY
           document.getElementById('isActive').checked = subscription.isActive !== false;
           document.getElementById('autoRenew').checked = subscription.autoRenew !== false;

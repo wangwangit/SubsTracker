@@ -89,13 +89,14 @@ async function createSubscription(subscription, env) {
       reminderDays: reminderSetting.unit === 'day' ? reminderSetting.value : undefined,
       reminderHours: reminderSetting.unit === 'hour' ? reminderSetting.value : undefined,
       notes: subscription.notes || '',
-      amount: subscription.amount || null,
+      amount: subscription.amount !== undefined && subscription.amount !== null ? subscription.amount : null,
       currency: subscription.currency || 'CNY',
       lastPaymentDate: initialPaymentDate,
-      paymentHistory: subscription.amount ? [{
+      paymentHistory: subscription.amount !== undefined && subscription.amount !== null ? [{
         id: Date.now().toString(),
         date: initialPaymentDate,
         amount: subscription.amount,
+        currency: subscription.currency || 'CNY',
         type: 'initial',
         note: '初始订阅',
         periodStart: subscription.startDate || initialPaymentDate,
@@ -180,12 +181,13 @@ async function updateSubscription(id, subscription, env) {
 
     let paymentHistory = oldSubscription.paymentHistory || [];
 
-    if (newAmount !== oldSubscription.amount) {
+    if (newAmount !== oldSubscription.amount || (subscription.currency !== undefined && subscription.currency !== oldSubscription.currency)) {
       const initialPaymentIndex = paymentHistory.findIndex(p => p.type === 'initial');
       if (initialPaymentIndex !== -1) {
         paymentHistory[initialPaymentIndex] = {
           ...paymentHistory[initialPaymentIndex],
-          amount: newAmount
+          amount: newAmount,
+          currency: subscription.currency || oldSubscription.currency || 'CNY'
         };
       }
     }
@@ -311,6 +313,7 @@ async function manualRenewSubscription(id, env, options = {}) {
       id: Date.now().toString(),
       date: paymentDate.toISOString(),
       amount: amount,
+      currency: subscription.currency || 'CNY',
       type: 'manual',
       note: note,
       periodStart: newStartDate.toISOString(),
@@ -419,6 +422,7 @@ async function updatePaymentRecord(subscriptionId, paymentId, paymentData, env) 
       ...paymentHistory[paymentIndex],
       date: paymentData.date || paymentHistory[paymentIndex].date,
       amount: paymentData.amount !== undefined ? paymentData.amount : paymentHistory[paymentIndex].amount,
+      currency: paymentData.currency || paymentHistory[paymentIndex].currency || subscription.currency || 'CNY',
       note: paymentData.note !== undefined ? paymentData.note : paymentHistory[paymentIndex].note
     };
 
