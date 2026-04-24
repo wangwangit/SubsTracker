@@ -9,7 +9,16 @@ export default {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
 
-    if (url.pathname === '/debug') {
+    if (url.pathname === '/') {
+      const { user } = await getUserFromRequest(request, env);
+      if (user) {
+        return new Response('', {
+          status: 302,
+          headers: { Location: '/admin' }
+        });
+      }
+      return handleLoginPage();
+    } else if (url.pathname === '/debug') {
       // 调试页必须登录后才能访问，避免泄露系统信息
       const { user } = await getUserFromRequest(request, env);
       if (!user) {
