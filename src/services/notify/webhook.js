@@ -64,6 +64,7 @@ function buildTemplateData(payload, config) {
   const customTimezone = getField('当前时区');
   const remarkMatch = contentStr.match(/备注[:：]\s*([\s\S]*?)\n发送时间[:：]/);
   const customRemark = remarkMatch ? remarkMatch[1].trim() : '';
+  const customTitle = (payload.title || '').replace(/^(手动测试通知|自动通知)[:：]\s*/, '');
   // ================= 🛠️ 核心修改：提取自定义变量 结束 =================
 
   const formattedMessage = [
@@ -89,7 +90,8 @@ function buildTemplateData(payload, config) {
     ruleType: payload.metadata?.ruleType ?? '',
     ruleValue: payload.metadata?.ruleValue ?? '',
       
-// ================= 💡 新增的8个自定义变量 =================
+// ================= 💡 新增的自定义变量 =================
+    ctitle: customTitle,
     type: customType,
     category: customCategory,
     calendarType: customCalendarType,
@@ -150,7 +152,7 @@ const body =  `
     try {
       const r = await fetch(config.WEBHOOK_URL, {
         method: config.WEBHOOK_METHOD || 'POST',
-        headers: {'Markdown': 'yes', 'Tags': `loudspeaker,${requestBody.type},${requestBody.category}`, 'Title': requestBody.title},
+        headers: {'Markdown': 'yes', 'Tags': `loudspeaker,${requestBody.type},${requestBody.category}`, 'Title': requestBody.ctitle},
         body
       });
       const text = await r.text().catch(() => '');
