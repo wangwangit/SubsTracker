@@ -125,12 +125,16 @@ export const webhookChannel = {
     } else {
       requestBody = { ...data };
     }
-    console.log(JSON.stringify(requestBody));
+    const body = `正文内容：${requestBody.remark}\n到期时间：${requestBody.dueDate}`;
+    
+    console.log("======BODY======");
+    console.log(JSON.stringify(body));
+    console.log("================");
     try {
       const r = await fetch(config.WEBHOOK_URL, {
         method: config.WEBHOOK_METHOD || 'POST',
         headers: {'Title': requestBody.title},
-        body: `正文内容：${requestBody.remark}\n到期时间：${requestBody.dueDate}`,
+        body,
         // body: requestBody.remark
       });
       const text = await r.text().catch(() => '');
