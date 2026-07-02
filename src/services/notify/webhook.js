@@ -138,15 +138,16 @@ export const webhookChannel = {
       requestBody = { ...data };
     }
 
-const body =  `> **📌 订阅详情**
-- **类型**: ${requestBody.type}
-- **分类**: ${requestBody.category}
-- **日历类型**: ${requestBody.calendarType}
-- **到期日期**: ${requestBody.dueDate}🚨
-- **自动续期**: ${requestBody.autoRenew}
-- **备注**: ${requestBody.remark}
-- **发送时间**: ${requestBody.sendTime}
-- **当前时区**: ${requestBody.timezone}`
+const body =  `
+- **📌 订阅详情**
+  - **类型**: ${requestBody.type}
+  - **分类**: ${requestBody.category}
+  - **日历类型**: ${requestBody.calendarType}
+  - **到期日期**: ${requestBody.dueDate}🚨
+  - **自动续期**: ${requestBody.autoRenew}
+  - **备注**: ${requestBody.remark}
+  - **发送时间**: ${requestBody.sendTime}
+  - **当前时区**: ${requestBody.timezone}`
     try {
       const r = await fetch(config.WEBHOOK_URL, {
         method: config.WEBHOOK_METHOD || 'POST',
