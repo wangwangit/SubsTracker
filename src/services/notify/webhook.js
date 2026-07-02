@@ -157,6 +157,7 @@ const body =  `
                   'Markdown': 'yes',
                   'Tags': `loudspeaker,${requestBody.type},${requestBody.category}`,
                   'Actions': `copy, 复制标题, ${requestBody.ctitle}; view, 订阅系统, https://sub.iliili.us.kg`,
+                  'Attach': 'https://picsum.photos/800/600',
                   'Title': requestBody.ctitle
                   },
         body
