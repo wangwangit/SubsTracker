@@ -139,7 +139,7 @@ export const webhookChannel = {
     }
 
 const body =  `---
-### 订阅详情
+✨✨**订阅详情**✨✨
 - **类型**: ${requestBody.type}
 - **分类**: ${requestBody.category}
 - **日历类型**: ${requestBody.calendarType}
