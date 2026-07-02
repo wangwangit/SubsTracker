@@ -144,7 +144,7 @@ const body =  `
 **日历类型**: ${requestBody.calendarType}
 **到期日期**: ${requestBody.dueDate}
 **自动续期**: ${requestBody.autoRenew}
-**备注**: ${requestBody.remark}
+**备注内容**: ${requestBody.remark}
 **发送时间**: ${requestBody.sendTime}
 **当前时区**: ${requestBody.timezone}`
     try {
