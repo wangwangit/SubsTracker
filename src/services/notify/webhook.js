@@ -52,11 +52,11 @@ function buildTemplateData(payload, config) {
   const contentStr = payload.content || '';
   
   // 1. 匹配到期日期（兼容换行符或空格）
-  const dueDateMatch = contentStr.match(/到期日期：\s*([^\n]+)/) || contentStr.match(/到期日期:\s*([^\n]+)/);
+  const dueDateMatch = contentStr.match(/到期日期[:：]\s*([^\n]+)/);
   const customDueDate = dueDateMatch ? dueDateMatch[1].trim() : '';
 
   // 2. 匹配备注（兼容换行符或空格）
-  const remarkMatch = contentStr.match(/备注：\s*([^\n]+)/) || contentStr.match(/备注:\s*([^\n]+)/);
+  const remarkMatch = contentStr.match(/备注[:：]\s*([\s\S]*?)\n发送时间[:：]/);
   const customRemark = remarkMatch ? remarkMatch[1].trim() : '';
   // ================= 🛠️ 核心修改：提取自定义变量 结束 =================
 
@@ -125,16 +125,12 @@ export const webhookChannel = {
     } else {
       requestBody = { ...data };
     }
-    const body = `正文内容：${requestBody.remark}\n到期时间：${requestBody.dueDate}`;
-    
-    console.log("======requestBody.remark======");
-    console.log(JSON.stringify(requestBody.remark));
-    console.log("================");
+
     try {
       const r = await fetch(config.WEBHOOK_URL, {
         method: config.WEBHOOK_METHOD || 'POST',
         headers: {'Title': requestBody.title},
-        body,
+        body: `正文内容：${requestBody.remark}\n到期时间：${requestBody.dueDate}`,
         // body: requestBody.remark
       });
       const text = await r.text().catch(() => '');
