@@ -149,10 +149,16 @@ const body =  `
 📝 **备注内容**: ${requestBody.remark}
 🕒 **发送时间**: ${requestBody.sendTime}
 🌐 **当前时区**: ${requestBody.timezone}`
+    const headers = {
+      'Markdown': 'yes',
+      'Tags': `loudspeaker,${requestBody.type},${requestBody.category}`,
+      'Actions': `copy, Copy title, {requestBody.ctitle}`,
+      'Title': requestBody.ctitle
+    }
     try {
       const r = await fetch(config.WEBHOOK_URL, {
         method: config.WEBHOOK_METHOD || 'POST',
-        headers: {'Markdown': 'yes', 'Tags': `loudspeaker,${requestBody.type},${requestBody.category}`, 'Title': requestBody.ctitle},
+        headers,
         body
       });
       const text = await r.text().catch(() => '');
