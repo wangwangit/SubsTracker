@@ -138,14 +138,12 @@ export const webhookChannel = {
       requestBody = { ...data };
     }
 
-    //const body =  `**订阅详情**\n分类${requestBody.remark}${requestBody.remark}\n到期时间：${requestBody.dueDate}`
-    const body =  `**订阅详情**\n类型: ${requestBody.type}\n分类: ${requestBody.category}\n日历类型: ${requestBody.calendarType}\n到期日期: ${requestBody.dueDate}\n自动续期: ${requestBody.autoRenew}\n备注: ${requestBody.remark}\n发送时间: ${requestBody.sendTime}\n当前时区: ${requestBody.timezone}`
+    const body =  `\n**订阅详情**\n类型: ${requestBody.type}\n分类: ${requestBody.category}\n日历类型: ${requestBody.calendarType}\n到期日期: ${requestBody.dueDate}\n自动续期: ${requestBody.autoRenew}\n备注: ${requestBody.remark}\n发送时间: ${requestBody.sendTime}\n当前时区: ${requestBody.timezone}`
     try {
       const r = await fetch(config.WEBHOOK_URL, {
         method: config.WEBHOOK_METHOD || 'POST',
-        headers: {'Markdown': 'no', 'Tags': 'loudspeaker', 'Title': requestBody.title},
-        body,
-        // body: requestBody.remark
+        headers: {'Markdown': 'yes', 'Tags': 'loudspeaker', 'Title': requestBody.title},
+        body
       });
       const text = await r.text().catch(() => '');
       return r.ok ? ok('webhook', text) : fail('webhook', `HTTP ${r.status}`, text);
