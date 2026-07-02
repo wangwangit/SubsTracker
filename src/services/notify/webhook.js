@@ -127,8 +127,8 @@ export const webhookChannel = {
     }
     const body = `正文内容：${requestBody.remark}\n到期时间：${requestBody.dueDate}`;
     
-    console.log("======BODY======");
-    console.log(JSON.stringify(body));
+    console.log("======requestBody.remark======");
+    console.log(JSON.stringify(requestBody.remark));
     console.log("================");
     try {
       const r = await fetch(config.WEBHOOK_URL, {
