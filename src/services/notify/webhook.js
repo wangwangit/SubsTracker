@@ -129,8 +129,9 @@ export const webhookChannel = {
     try {
       const r = await fetch(config.WEBHOOK_URL, {
         method: config.WEBHOOK_METHOD || 'POST',
-        headers: {'Title': requestBody.title, 'Expires': requestBody.dueDate},
-        body: requestBody.remark
+        headers: {'Title': requestBody.title},
+        body: `正文内容：${requestBody.remark}\n\n到期时间：${requestBody.dueDate}`,
+        // body: requestBody.remark
       });
       const text = await r.text().catch(() => '');
       return r.ok ? ok('webhook', text) : fail('webhook', `HTTP ${r.status}`, text);
