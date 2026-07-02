@@ -129,8 +129,8 @@ export const webhookChannel = {
     try {
       const r = await fetch(config.WEBHOOK_URL, {
         method: config.WEBHOOK_METHOD || 'POST',
-        headers: {'Title': requestBody.title},
-        body: `正文内容：${requestBody.remark}\n到期时间：${requestBody.dueDate}`,
+        headers: {'Markdown': 'yes', 'Tags': 'loudspeaker', 'Title': requestBody.title},
+        body: `**正文内容：**${requestBody.remark}\n**到期时间**：${requestBody.dueDate}`,
         // body: requestBody.remark
       });
       const text = await r.text().catch(() => '');
