@@ -141,12 +141,12 @@ export const webhookChannel = {
 const body =  `
 &nbsp;
 \\*\\*订阅详情\\*\\*
-**日历类型**: ${requestBody.calendarType}
-**到期日期**: ${requestBody.dueDate}
-**自动续期**: ${requestBody.autoRenew}
-**备注内容**: ${requestBody.remark}
-**发送时间**: ${requestBody.sendTime}
-**当前时区**: ${requestBody.timezone}`
+📅 **日历类型**: ${requestBody.calendarType}
+📆 **到期日期**: ${requestBody.dueDate}
+🔄 **自动续期**: ${requestBody.autoRenew}
+📝 **备注内容**: ${requestBody.remark}
+🕒 **发送时间**: ${requestBody.sendTime}
+🌐 **当前时区**: ${requestBody.timezone}`
     try {
       const r = await fetch(config.WEBHOOK_URL, {
         method: config.WEBHOOK_METHOD || 'POST',
