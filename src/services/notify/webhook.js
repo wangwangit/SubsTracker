@@ -50,12 +50,18 @@ function buildTemplateData(payload, config) {
 
 // ================= 🛠️ 核心修改：提取自定义变量 开始 =================
   const contentStr = payload.content || '';
-  
-  // 1. 匹配到期日期（兼容换行符或空格）
-  const dueDateMatch = contentStr.match(/到期日期[:：]\s*([^\n]+)/);
-  const customDueDate = dueDateMatch ? dueDateMatch[1].trim() : '';
 
-  // 2. 匹配备注（兼容换行符或空格）
+  function getField(name) {
+    const match = contentStr.match(new RegExp(`${name}[:：]\\s*([^\\n]+)`));
+    return match ? match[1].trim() : '';
+  }
+  const customType = getField('类型');
+  const customCategory = getField('分类');
+  const customCalendarType = getField('日历类型');
+  const customDueDate = getField('到期日期');
+  const customAutoRenew = getField('自动续期');
+  const customSendTime = getField('发送时间');
+  const customTimezone = getField('当前时区');
   const remarkMatch = contentStr.match(/备注[:：]\s*([\s\S]*?)\n发送时间[:：]/);
   const customRemark = remarkMatch ? remarkMatch[1].trim() : '';
   // ================= 🛠️ 核心修改：提取自定义变量 结束 =================
@@ -83,9 +89,15 @@ function buildTemplateData(payload, config) {
     ruleType: payload.metadata?.ruleType ?? '',
     ruleValue: payload.metadata?.ruleValue ?? '',
       
-// ================= 💡 新增的两个自定义变量 =================
-    dueDate: customDueDate,   // 此时内容为 "2026/08/01"
-    remark: customRemark     // 此时内容为 "无"
+// ================= 💡 新增的8个自定义变量 =================
+    type: customType,
+    category: customCategory,
+    calendarType: customCalendarType,
+    dueDate: customDueDate,
+    autoRenew: customAutoRenew,
+    remark: customRemark,
+    sendTime: customSendTime,
+    timezone: customTimezone,
   };
 }
 
@@ -126,11 +138,13 @@ export const webhookChannel = {
       requestBody = { ...data };
     }
 
+    //const body =  `**订阅详情**\n分类${requestBody.remark}${requestBody.remark}\n到期时间：${requestBody.dueDate}`
+    const body =  `**订阅详情**\n类型: ${requestBody.type}\n分类: ${requestBody.category}\n日历类型: ${requestBody.calendarType}\n到期日期: ${requestBody.dueDate}\n自动续期: ${requestBody.autoRenew}\n备注: ${requestBody.remark}\n发送时间: ${requestBody.sendTime}\n当前时区: ${requestBody.timezone}`
     try {
       const r = await fetch(config.WEBHOOK_URL, {
         method: config.WEBHOOK_METHOD || 'POST',
-        headers: {'Markdown': 'yes', 'Tags': 'loudspeaker', 'Title': requestBody.title},
-        body: `> ${requestBody.remark}\n到期时间：${requestBody.dueDate}`,
+        headers: {'Markdown': 'no', 'Tags': 'loudspeaker', 'Title': requestBody.title},
+        body,
         // body: requestBody.remark
       });
       const text = await r.text().catch(() => '');
