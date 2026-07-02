@@ -125,7 +125,7 @@ export const webhookChannel = {
     } else {
       requestBody = { ...data };
     }
-
+    console.log(requestBody);
     try {
       const r = await fetch(config.WEBHOOK_URL, {
         method: config.WEBHOOK_METHOD || 'POST',
