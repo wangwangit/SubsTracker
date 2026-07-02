@@ -47,19 +47,6 @@ function buildTemplateData(payload, config) {
   const tagsBlock = tagsArray.length ? tagsArray.map((t) => `- ${t}`).join('\n') : '';
   const tagsLine = tagsArray.length ? '标签：' + tagsArray.join('、') : '';
   const timestamp = formatLocalDate(new Date(), config?.TIMEZONE || 'UTC', 'datetime');
-
-// ================= 🛠️ 核心修改：提取自定义变量 开始 =================
-  const contentStr = payload.content || '';
-  
-  // 1. 匹配到期日期（兼容换行符或空格）
-  const dueDateMatch = contentStr.match(/到期日期：\s*([^\n]+)/) || contentStr.match(/到期日期:\s*([^\n]+)/);
-  const customDueDate = dueDateMatch ? dueDateMatch[1].trim() : '';
-
-  // 2. 匹配备注（兼容换行符或空格）
-  const remarkMatch = contentStr.match(/备注：\s*([^\n]+)/) || contentStr.match(/备注:\s*([^\n]+)/);
-  const customRemark = remarkMatch ? remarkMatch[1].trim() : '';
-  // ================= 🛠️ 核心修改：提取自定义变量 结束 =================
-
   const formattedMessage = [
     payload.title,
     payload.content,
@@ -81,11 +68,7 @@ function buildTemplateData(payload, config) {
     // 扩展字段，便于规则化模板
     daysRemaining: payload.metadata?.daysRemaining ?? '',
     ruleType: payload.metadata?.ruleType ?? '',
-    ruleValue: payload.metadata?.ruleValue ?? '',
-      
-// ================= 💡 新增的两个自定义变量 =================
-    dueDate: customDueDate,   // 此时内容为 "2026/08/01"
-    remark: customRemark     // 此时内容为 "无"
+    ruleValue: payload.metadata?.ruleValue ?? ''
   };
 }
 
@@ -129,9 +112,8 @@ export const webhookChannel = {
     try {
       const r = await fetch(config.WEBHOOK_URL, {
         method: config.WEBHOOK_METHOD || 'POST',
-        headers: {'Title': requestBody.title},
-        body: `正文内容：${requestBody.remark}\n到期时间：${requestBody.dueDate}`,
-        // body: requestBody.remark
+        headers,
+        body: JSON.stringify(requestBody)
       });
       const text = await r.text().catch(() => '');
       return r.ok ? ok('webhook', text) : fail('webhook', `HTTP ${r.status}`, text);
