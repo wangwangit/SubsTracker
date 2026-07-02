@@ -139,6 +139,7 @@ export const webhookChannel = {
     }
 
 const body =  `
+&nbsp;
 \\*\\*订阅详情\\*\\*
 **类型**: ${requestBody.type}
 **分类**: ${requestBody.category}
