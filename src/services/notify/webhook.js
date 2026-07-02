@@ -141,8 +141,6 @@ export const webhookChannel = {
 const body =  `
 &nbsp;
 \\*\\*订阅详情\\*\\*
-**类型**: ${requestBody.type}
-**分类**: ${requestBody.category}
 **日历类型**: ${requestBody.calendarType}
 **到期日期**: ${requestBody.dueDate}
 **自动续期**: ${requestBody.autoRenew}
@@ -152,7 +150,7 @@ const body =  `
     try {
       const r = await fetch(config.WEBHOOK_URL, {
         method: config.WEBHOOK_METHOD || 'POST',
-        headers: {'Markdown': 'yes', 'Tags': 'loudspeaker', 'Title': requestBody.title},
+        headers: {'Markdown': 'yes', 'Tags': `loudspeaker,${requestBody.type},${requestBody.category}`, 'Title': requestBody.title},
         body
       });
       const text = await r.text().catch(() => '');
