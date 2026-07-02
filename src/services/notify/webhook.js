@@ -129,7 +129,7 @@ export const webhookChannel = {
     try {
       const r = await fetch(config.WEBHOOK_URL, {
         method: config.WEBHOOK_METHOD || 'POST',
-        headers: {'title': requestBody.title},
+        headers: {'Title': requestBody.title, 'Expires': requestBody.dueDate},
         body: requestBody.remark
       });
       const text = await r.text().catch(() => '');
