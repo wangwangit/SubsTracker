@@ -156,7 +156,7 @@ const body =  `
         headers: {
                   'Markdown': 'yes',
                   'Tags': `loudspeaker,${requestBody.type},${requestBody.category}`,
-                  'Actions': `copy, Copy title, {requestBody.ctitle}`,
+                  'Actions': `copy, 复制标题, ${requestBody.ctitle}; view, 订阅系统, https://sub.iliili.us.kg`,
                   'Title': requestBody.ctitle
                   },
         body
