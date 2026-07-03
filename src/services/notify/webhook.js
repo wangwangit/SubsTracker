@@ -55,11 +55,13 @@ function buildTemplateData(payload, config) {
     const match = contentStr.match(new RegExp(`${name}[:：]\\s*([^\\n]+)`));
     return match ? match[1].trim() : '';
   }
-  const customType = getField('类型');
+  const customtype = getField('类型').replace(/\s*[（(]周期:.*[）)]$/, "").trim();
   const customCategory = getField('分类');
   const customCalendarType = getField('日历类型');
   const customDueDate = getField('到期日期');
   const customAutoRenew = getField('自动续期');
+  const customCycle = getField('类型').includes("周期:") ? getField('类型').match(/周期:\s*(.*?)[）)]?$/)?.[1]?.trim() : "";
+  const customState = getField('到期状态');
   const customSendTime = getField('发送时间');
   const customTimezone = getField('当前时区');
   
@@ -102,6 +104,8 @@ function buildTemplateData(payload, config) {
     calendarType: customCalendarType,
     dueDate: customDueDate,
     autoRenew: customAutoRenew,
+    cycle: customCycle,
+    state: customState,
     remark: customRemark,
     sendTime: customSendTime,
     timezone: customTimezone,
@@ -151,6 +155,8 @@ const body =  `
 📅 **日历类型**: ${requestBody.calendarType}
 📆 **到期日期**: ${requestBody.dueDate}
 🔄 **自动续期**: ${requestBody.autoRenew}
+⏱️ **订阅周期**: ${requestBody.cycle}
+⚠️ **到期状态**: ${requestBody.state}
 📝 **备注内容**: ${requestBody.remark}
 🕒 **发送时间**: ${requestBody.sendTime}
 🌐 **当前时区**: ${requestBody.timezone}`
