@@ -66,7 +66,7 @@ function buildTemplateData(payload, config) {
   const remarkMatch = contentStr.match(/备注[:：]\s*([\s\S]*?)\n发送时间[:：]/);
   const customRemark = remarkMatch ? remarkMatch[1].trim() : '';
   
-  const isTest = (payload.title || '').startsWith('手动测试通知：');
+  const isTest = (payload.title || '').startsWith('手动测试通知');
   const customTitle = (payload.title || '').replace(/^(手动测试通知|自动通知)[:：]\s*/, '');
   const finalTitle = isTest ? `${customTitle} [TEST]` : customTitle;
   // ================= 🛠️ 核心修改：提取自定义变量 结束 =================
@@ -95,7 +95,8 @@ function buildTemplateData(payload, config) {
     ruleValue: payload.metadata?.ruleValue ?? '',
       
 // ================= 💡 新增的自定义变量 =================
-    ctitle: finalTitle,
+    ctitle: customTitle,
+    ftitle: finalTitle,
     type: customType,
     category: customCategory,
     calendarType: customCalendarType,
@@ -160,7 +161,7 @@ const body =  `
         headers: {
                   'Markdown': 'yes',
                   'Tags': `loudspeaker,${requestBody.type},${requestBody.category}`,
-                  'Actions': `copy, 复制标题, ${requestBody.ctitle}; view, 订阅系统, https://sub.iliili.us.kg`,
+                  'Actions': `copy, 复制标题, ${requestBody.ftitle}; view, 订阅系统, https://sub.iliili.us.kg`,
                   'Attach': 'https://picsum.photos/800/600',
                   'Title': requestBody.ctitle
                   },
