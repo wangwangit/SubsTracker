@@ -55,7 +55,7 @@ function buildTemplateData(payload, config) {
     const match = contentStr.match(new RegExp(`${name}[:：]\\s*([^\\n]+)`));
     return match ? match[1].trim() : '';
   }
-  const customtype = getField('类型').replace(/\s*[（(]周期:.*[）)]$/, "").trim();
+  const customType = getField('类型').replace(/\s*[（(]周期:.*[）)]$/, "").trim();
   const customCategory = getField('分类');
   const customCalendarType = getField('日历类型');
   const customDueDate = getField('到期日期');
