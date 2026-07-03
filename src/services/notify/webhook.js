@@ -158,6 +158,7 @@ const body =  `
 ⏱️ **订阅周期**: ${requestBody.cycle}
 ⚠️ **到期状态**: ${requestBody.state}
 📝 **备注内容**: ${requestBody.remark}
+&nbsp;
 🕒 **发送时间**: ${requestBody.sendTime}
 🌐 **当前时区**: ${requestBody.timezone}`
 
