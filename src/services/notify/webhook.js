@@ -154,9 +154,9 @@ const body =  `
 \\*\\*订阅详情\\*\\*
 📅 **日历类型**: ${requestBody.calendarType}
 📆 **到期日期**: ${requestBody.dueDate}
-🔄 **自动续期**: ${requestBody.autoRenew}
-⏱️ **订阅周期**: ${requestBody.cycle}
 ⚠️ **到期状态**: ${requestBody.state}
+⏱️ **订阅周期**: ${requestBody.cycle}
+🔄 **自动续期**: ${requestBody.autoRenew}
 📝 **备注内容**: ${requestBody.remark}
 &nbsp;
 🕒 **发送时间**: ${requestBody.sendTime}
