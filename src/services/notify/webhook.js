@@ -87,7 +87,6 @@ export const webhookChannel = {
     
 /**  第一处修改开始  **/
     // let headers = { 'Content-Type': 'application/json' };
-    let headers = { 'Content-Type': 'application/json', 'title': data.title };
 /**  第一处修改结束  **/
     
     if (config.WEBHOOK_HEADERS) {
@@ -100,6 +99,10 @@ export const webhookChannel = {
     }
 
     const data = buildTemplateData(payload, config);
+    /**  第一处修改开始  **/
+    // let headers = { 'Content-Type': 'application/json' };
+    let headers = { 'Content-Type': 'application/json', 'title': data.title };
+/**  第一处修改结束  **/
     let requestBody;
     if (config.WEBHOOK_TEMPLATE) {
       try {
@@ -117,7 +120,7 @@ export const webhookChannel = {
       const r = await fetch(config.WEBHOOK_URL, {
         method: config.WEBHOOK_METHOD || 'POST',
         headers,
-        body: JSON.stringify(requestBody)
+        body: JSON.stringify(requestBody).replaceAll('\\\\n', '\n').replaceAll('\\"', ''))
       });
       const text = await r.text().catch(() => '');
       return r.ok ? ok('webhook', text) : fail('webhook', `HTTP ${r.status}`, text);
