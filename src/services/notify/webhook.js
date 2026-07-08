@@ -120,7 +120,7 @@ export const webhookChannel = {
       const r = await fetch(config.WEBHOOK_URL, {
         method: config.WEBHOOK_METHOD || 'POST',
         headers,
-        body: JSON.stringify(requestBody).replaceAll('\\\\n', '\n').replaceAll('\\"', ''))
+        body: JSON.stringify(requestBody).replaceAll('\\\\n', '\n').replaceAll('\\"', '')
       });
       const text = await r.text().catch(() => '');
       return r.ok ? ok('webhook', text) : fail('webhook', `HTTP ${r.status}`, text);
