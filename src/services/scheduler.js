@@ -198,7 +198,6 @@ export async function checkExpiringSubscriptions(env) {
     // 排序：按剩余天数升序，更紧迫的在前
     ready.sort((a, b) => a.daysDiff - b.daysDiff);
 
-/*禁用多条合并发送
     // 一次性聚合所有订阅成一条通知（与既有渠道契约一致）
     // notify_log 按 (subId, ruleId, channel) 维度落，仍可细粒度查询
     const enrichedSubs = ready.map((c) => ({
@@ -228,39 +227,6 @@ export async function checkExpiringSubscriptions(env) {
       }
     );
     sentCount = dispatchResult.successCount;
-*/
-
-/*================改成单条发送 开始=================*/
-
-for (const c of ready) {
-  const enrichedSub = {
-    ...c.sub,
-    daysRemaining: c.daysDiff,
-    hoursRemaining: Math.round(c.hoursDiff)
-  };
-  const title = c.sub.name;
-  const content = formatNotificationContent([enrichedSub], config);
-
-  const dispatchResult = await dispatch(
-    { title, content },
-    config,
-    {
-      env,
-      subId: c.sub.id,
-      ruleId: c.rule.id,
-      logPrefix: '[定时任务]',
-      metadata: {
-        tags: [c.sub.name],
-        daysRemaining: c.daysDiff,
-        ruleType: c.rule.type,
-        ruleValue: c.rule.value
-      }
-    }
-  );
-
-  sentCount += dispatchResult.successCount;
-}
-/*================改成单条发送 结束=================*/
 
     const entry = await schedulerLogsRepo.writeLog(env, {
       startedAt: startedAtIso,
