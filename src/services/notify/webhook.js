@@ -171,7 +171,7 @@ const body =  `
                   'Actions': `copy, 复制标题, ${requestBody.ctitle}; view, 订阅系统, https://sub.iliili.us.kg`,
                   'Title': requestBody.ftitle
                   },
-        body
+        body: payload.content
       });
       const text = await r.text().catch(() => '');
       return r.ok ? ok('webhook', text) : fail('webhook', `HTTP ${r.status}`, text);
