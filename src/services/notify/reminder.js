@@ -55,7 +55,7 @@ function formatNotificationContent(subscriptions, config) {
 
   for (const sub of subscriptions) {
     const typeText = sub.customType || '其他';
-    const periodText = (sub.periodValue && sub.periodUnit) ? `(周期: ${sub.periodValue} ${ { day: '天', month: '月', year: '年' }[sub.periodUnit] || sub.periodUnit})` : '';
+    const periodText = (sub.periodValue && sub.periodUnit) ? `(${sub.periodValue} ${ { day: '天', month: '月', year: '年' }[sub.periodUnit] || sub.periodUnit})` : '';
     const categoryText = sub.category ? sub.category : '未分类';
     const reminderSetting = resolveReminderSetting(sub);
 
@@ -94,23 +94,23 @@ function formatNotificationContent(subscriptions, config) {
     const amountText = formattedAmount ? `\n金额: ${formattedAmount}/周期` : '';
 
     const subscriptionContent = `${statusEmoji} **${sub.name}**
-类型: ${typeText} ${periodText}
-分类: ${categoryText}${amountText}
-日历类型: ${calendarType}
-到期日期: ${formattedExpiryDate}${lunarExpiryText}
-自动续期: ${autoRenewText}
-${reminderText}
-到期状态: ${statusText}`;
+📂 类型: ${typeText}
+🏷️ 分类: ${categoryText}${amountText}
+📅 日历类型: ${calendarType}
+📆 到期日期: ${formattedExpiryDate}${lunarExpiryText}
+🔄 自动续期: ${autoRenewText}
+⏱️ 订阅周期: ${periodText}
+🚨 到期状态: ${statusText}`;
 
     let finalContent = sub.notes ? 
-      subscriptionContent + `\n备注: ${sub.notes}` : 
+      subscriptionContent + `\n📝 备注内容: ${sub.notes}` : 
       subscriptionContent;
 
     content += finalContent + '\n\n';
   }
 
   const currentTime = formatTimeInTimezone(new Date(), timezone, 'datetime');
-  content += `发送时间: ${currentTime}\n当前时区: ${formatTimezoneDisplay(timezone)}`;
+  content += `🕒 发送时间: ${currentTime}\n🌐 当前时区: ${formatTimezoneDisplay(timezone)}`;
 
   return content;
 }
