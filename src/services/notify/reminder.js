@@ -94,23 +94,23 @@ function formatNotificationContent(subscriptions, config) {
     const amountText = formattedAmount ? `\n金额: ${formattedAmount}/周期` : '';
 
     const subscriptionContent = `${statusEmoji} **${sub.name}**
-📂 类型: ${typeText}
-🏷️ 分类: ${categoryText}${amountText}
-📅 日历类型: ${calendarType}
-📆 到期日期: ${formattedExpiryDate}${lunarExpiryText}
-🔄 自动续期: ${autoRenewText}
-⏱️ 订阅周期: ${periodText}
-🚨 到期状态: ${statusText}`;
+类型: ${typeText}
+分类: ${categoryText}${amountText}
+日历类型: ${calendarType}
+到期日期: ${formattedExpiryDate}${lunarExpiryText}
+到期状态: ${statusText}
+订阅周期: ${periodText}
+自动续期: ${autoRenewText}`;
 
     let finalContent = sub.notes ? 
-      subscriptionContent + `\n📝 备注内容: ${sub.notes}` : 
+      subscriptionContent + `\n备注内容: ${sub.notes}` : 
       subscriptionContent;
 
     content += finalContent + '\n\n';
   }
 
   const currentTime = formatTimeInTimezone(new Date(), timezone, 'datetime');
-  content += `🕒 发送时间: ${currentTime}\n🌐 当前时区: ${formatTimezoneDisplay(timezone)}`;
+  content += `发送时间: ${currentTime}\n当前时区: ${formatTimezoneDisplay(timezone)}`;
 
   return content;
 }
