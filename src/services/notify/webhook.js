@@ -47,32 +47,6 @@ function buildTemplateData(payload, config) {
   const tagsBlock = tagsArray.length ? tagsArray.map((t) => `- ${t}`).join('\n') : '';
   const tagsLine = tagsArray.length ? '标签：' + tagsArray.join('、') : '';
   const timestamp = formatLocalDate(new Date(), config?.TIMEZONE || 'UTC', 'datetime');
-
-// ================= 🛠️ 核心修改：提取自定义变量 开始 =================
-  const contentStr = payload.content || '';
-
-  function getField(name) {
-    const match = contentStr.match(new RegExp(`${name}[:：]\\s*([^\\n]+)`));
-    return match ? match[1].trim() : '';
-  }
-  const customType = getField('类型').replace(/\s*[（(]周期:.*[）)]$/, "").trim();
-  const customCategory = getField('分类');
-  const customCalendarType = getField('日历类型');
-  const customDueDate = getField('到期日期');
-  const customAutoRenew = getField('自动续期');
-  const customCycle = getField('类型').includes("周期:") ? getField('类型').match(/周期:\s*(.*?)[）)]?$/)?.[1]?.trim() : "";
-  const customState = getField('到期状态');
-  const customSendTime = getField('发送时间');
-  const customTimezone = getField('当前时区');
-  
-  const remarkMatch = contentStr.match(/备注[:：]\s*([\s\S]*?)\n发送时间[:：]/);
-  const customRemark = remarkMatch ? remarkMatch[1].trim() : '';
-  
-  const isTest = (payload.title || '').startsWith('手动测试通知');
-  const customTitle = (payload.title || '').replace(/^(手动测试通知|自动通知)[:：]\s*/, '');
-  const finalTitle = isTest ? `${customTitle} [TEST]` : customTitle;
-  // ================= 🛠️ 核心修改：提取自定义变量 结束 =================
-
   const formattedMessage = [
     payload.title,
     payload.content,
@@ -94,21 +68,7 @@ function buildTemplateData(payload, config) {
     // 扩展字段，便于规则化模板
     daysRemaining: payload.metadata?.daysRemaining ?? '',
     ruleType: payload.metadata?.ruleType ?? '',
-    ruleValue: payload.metadata?.ruleValue ?? '',
-      
-// ================= 💡 新增的自定义变量 =================
-    ctitle: customTitle,
-    ftitle: finalTitle,
-    type: customType,
-    category: customCategory,
-    calendarType: customCalendarType,
-    dueDate: customDueDate,
-    autoRenew: customAutoRenew,
-    cycle: customCycle,
-    state: customState,
-    remark: customRemark,
-    sendTime: customSendTime,
-    timezone: customTimezone,
+    ruleValue: payload.metadata?.ruleValue ?? ''
   };
 }
 
@@ -149,30 +109,11 @@ export const webhookChannel = {
       requestBody = { ...data };
     }
 
-const body =  `
-&nbsp;
-\\*\\*订阅详情\\*\\*
-📅 **日历类型**: ${requestBody.calendarType}
-📆 **到期日期**: ${requestBody.dueDate}
-⚠️ **到期状态**: ${requestBody.state}
-⏱️ **订阅周期**: ${requestBody.cycle}
-🔄 **自动续期**: ${requestBody.autoRenew}
-📝 **备注内容**: ${requestBody.remark}
-&nbsp;
-🕒 **发送时间**: ${requestBody.sendTime}
-🌐 **当前时区**: ${requestBody.timezone}`
-
     try {
       const r = await fetch(config.WEBHOOK_URL, {
         method: config.WEBHOOK_METHOD || 'POST',
-        headers: {
-                  'Markdown': 'yes',
-                  'Tags': `loudspeaker,${requestBody.type},${requestBody.category}`,
-                  'Actions': `copy, 复制标题, ${requestBody.ctitle}; view, 订阅系统, https://sub.iliili.us.kg`,
-                  'Attach': 'https://picsum.photos/800/600',
-                  'Title': requestBody.ftitle
-                  },
-        body
+        headers,
+        body: JSON.stringify(requestBody)
       });
       const text = await r.text().catch(() => '');
       return r.ok ? ok('webhook', text) : fail('webhook', `HTTP ${r.status}`, text);
