@@ -24,10 +24,10 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      # - name: Lint + Test (deploy 前最后一道防线)
-      #   run: |
-      #     npm run lint
-      #     npm test
+      - name: Lint + Test (deploy 前最后一道防线)
+        run: |
+          npm run lint
+          npm test
 
       - name: Deploy to Cloudflare Workers
         run: npm run deploy:safe
