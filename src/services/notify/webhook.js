@@ -113,7 +113,7 @@ export const webhookChannel = {
       const r = await fetch(config.WEBHOOK_URL, {
         method: config.WEBHOOK_METHOD || 'POST',
         headers,
-        body: payload.content + '\n' + payload.content
+        body: '&nbsp\n' + payload.title + '\n' + payload.content
       });
       const text = await r.text().catch(() => '');
       return r.ok ? ok('webhook', text) : fail('webhook', `HTTP ${r.status}`, text);
