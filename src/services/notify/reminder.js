@@ -55,7 +55,7 @@ function formatNotificationContent(subscriptions, config) {
 
   for (const sub of subscriptions) {
     const typeText = sub.customType || '其他';
-    const periodText = (sub.periodValue && sub.periodUnit) ? `(${sub.periodValue} ${ { day: '天', month: '月', year: '年' }[sub.periodUnit] || sub.periodUnit})` : '';
+    const periodText = (sub.periodValue && sub.periodUnit) ? `${sub.periodValue} ${ { day: '天', month: '月', year: '年' }[sub.periodUnit] || sub.periodUnit}` : '';
     const categoryText = sub.category ? sub.category : '未分类';
     const reminderSetting = resolveReminderSetting(sub);
 
@@ -104,7 +104,7 @@ function formatNotificationContent(subscriptions, config) {
 
     let finalContent = sub.notes ? 
       subscriptionContent + `\n备注内容: ${sub.notes}` : 
-      subscriptionContent;
+      subscriptionContent + '\n备注内容: 无';
 
     content += finalContent + '\n\n';
   }
