@@ -1899,6 +1899,11 @@ const lunarBiz = {
       statusSelect.addEventListener('change', () => renderSubscriptionTable());
     }
 
+    const listShowLunar = document.getElementById('listShowLunar');
+    if (listShowLunar) {
+      listShowLunar.addEventListener('change', handleListLunarToggle);
+    }
+
     // 获取所有订阅并按到期时间排序
     async function loadSubscriptions(showLoading = true) {
       try {
