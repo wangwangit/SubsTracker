@@ -18,7 +18,8 @@ function run(command) {
 
 function listNamespaces() {
   const output = run('npx wrangler kv namespace list');
-  const parsed = JSON.parse(output);
+  const start = output.indexOf('[');
+  const parsed = start === -1 ? [] : JSON.parse(output.slice(start));
   return Array.isArray(parsed) ? parsed : [];
 }
 
