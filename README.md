@@ -1,6 +1,6 @@
 # SubsTracker — 订阅管理与提醒系统
 
-基于 **Cloudflare Workers + KV** 的轻量级订阅到期提醒。在网页里管理订阅，到点通过 Telegram / Bark / 企业微信 / ntfy 等 **10 种渠道** 推送，并自带发送与调度日志方便排查。
+基于 **Cloudflare Workers + KV** 的轻量级订阅到期提醒。在网页里管理订阅，到点通过 Telegram / Bark / 企业微信 / ntfy 等 **11 种渠道** 推送，并自带发送与调度日志方便排查。
 
 **适合**：个人自托管、域名/会员/账单到期提醒。  
 **不适合**：多用户协作、复杂企业审批流。
@@ -129,6 +129,7 @@ Cloudflare Dashboard → **Workers & Pages → KV** → 打开 `SUBSCRIPTIONS_KV
 | Bark | Device Key；自建可填 Server |
 | 企业微信 | 群机器人 Webhook |
 | ntfy | Server（默认 ntfy.sh）+ Topic；可选 Token |
+| WPUSH | API Key；可选 Channel / Topic 编码 |
 | 邮件 | Resend API Key + 收发邮箱 |
 | Webhook | 任意 HTTP 地址 + 可选模板 |
 
@@ -227,7 +228,7 @@ Cloudflare Dashboard → **Workers & Pages → KV** → 打开 `SUBSCRIPTIONS_KV
 
 ### 通知渠道（10）
 
-Telegram · NotifyX · Webhook · 企业微信 · Resend 邮件 · Bark · Gotify · Server酱 · PushPlus · **ntfy**
+Telegram · NotifyX · Webhook · 企业微信 · Resend 邮件 · Bark · Gotify · Server酱 · PushPlus · ntfy · **WPUSH**
 
 ### 可观测
 
@@ -296,15 +297,19 @@ Telegram · NotifyX · Webhook · 企业微信 · Resend 邮件 · Bark · Gotif
 
 启用 ntfy → Server 默认 `https://ntfy.sh` → 填自己的 Topic → 手机 ntfy App 订阅同一 Topic → 点测试。
 
-### 10. 控制台里 `beacon.min.js` / cloudflareinsights 报错？
+### 10. WPUSH 怎么配？
+
+启用 WPUSH → 在 [设置页](https://wpush.cn/settings) 获取 API Key → 可选填写渠道 / Topic 编码 → 点测试。成功条件为接口返回 `code === 0`。
+
+### 11. 控制台里 `beacon.min.js` / cloudflareinsights 报错？
 
 那是 **Cloudflare 统计脚本**，不是本项目业务代码。一般可忽略，与订阅列表无关。
 
-### 11. Authentication error [code: 10000]（部署时）
+### 12. Authentication error [code: 10000]（部署时）
 
 Token 权限不足或 Wrangler 缓存问题：检查 API Token 权限，必要时删 `.wrangler/` 后重试。
 
-### 12. 第三方系统想调通知接口？
+### 13. 第三方系统想调通知接口？
 
 在系统配置生成 **第三方 API 令牌** 后：
 

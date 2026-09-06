@@ -38,7 +38,10 @@ const DEFAULT_CONFIG = {
   PUSHPLUS_CHANNEL: '',
   NTFY_SERVER: 'https://ntfy.sh',
   NTFY_TOPIC: '',
-  NTFY_TOKEN: ''
+  NTFY_TOKEN: '',
+  WPUSH_APIKEY: '',
+  WPUSH_CHANNEL: '',
+  WPUSH_TOPIC_CODE: ''
 };
 
 async function getConfig(env) {

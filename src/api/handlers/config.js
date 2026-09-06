@@ -14,7 +14,8 @@ const SECRET_FIELDS = [
   'GOTIFY_APP_TOKEN',
   'SERVERCHAN_SENDKEY',
   'PUSHPLUS_TOKEN',
-  'NTFY_TOKEN'
+  'NTFY_TOKEN',
+  'WPUSH_APIKEY'
 ];
 
 function isConfiguredSecret(value) {
@@ -121,6 +122,10 @@ async function handleUpdateConfig(request, env) {
       NTFY_SERVER: (newConfig.NTFY_SERVER || 'https://ntfy.sh').trim() || 'https://ntfy.sh',
       NTFY_TOPIC: (newConfig.NTFY_TOPIC || '').trim(),
       NTFY_TOKEN: mergeSecretField(config, newConfig, 'NTFY_TOKEN', clearSecretFields),
+
+      WPUSH_APIKEY: mergeSecretField(config, newConfig, 'WPUSH_APIKEY', clearSecretFields),
+      WPUSH_CHANNEL: (newConfig.WPUSH_CHANNEL || '').trim(),
+      WPUSH_TOPIC_CODE: (newConfig.WPUSH_TOPIC_CODE || '').trim(),
 
       ENABLED_NOTIFIERS: newConfig.ENABLED_NOTIFIERS || ['notifyx'],
       TIMEZONE: newConfig.TIMEZONE || config.TIMEZONE || 'UTC',
