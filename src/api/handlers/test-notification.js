@@ -10,6 +10,7 @@ import { sendGotifyNotification } from '../../services/notify/gotify.js';
 import { sendServerChanNotification } from '../../services/notify/serverchan.js';
 import { sendPushPlusNotification } from '../../services/notify/pushplus.js';
 import { sendNtfyNotification } from '../../services/notify/ntfy.js';
+import { sendWPushNotification } from '../../services/notify/wpush.js';
 
 async function handleTestNotification(request, env) {
   try {
@@ -19,7 +20,7 @@ async function handleTestNotification(request, env) {
     let message = '';
 
     const type = typeof body.type === 'string' ? body.type.trim() : '';
-    const supportedTypes = ['telegram', 'notifyx', 'webhook', 'wechatbot', 'email', 'bark', 'gotify', 'serverchan', 'pushplus', 'ntfy'];
+    const supportedTypes = ['telegram', 'notifyx', 'webhook', 'wechatbot', 'email', 'bark', 'gotify', 'serverchan', 'pushplus', 'ntfy', 'wpush'];
 
     if (!type) {
       return new Response(
@@ -180,6 +181,19 @@ async function handleTestNotification(request, env) {
       const content = '这是一条测试通知，用于验证 ntfy 通知功能是否正常工作。\n\n发送时间: ' + formatBeijingTime();
       success = await sendNtfyNotification(title, content, testConfig);
       message = success ? 'ntfy 通知发送成功' : 'ntfy 通知发送失败，请检查配置';
+    } else if (type === 'wpush') {
+      const testConfig = {
+        ...config,
+        WPUSH_APIKEY: (typeof body.WPUSH_APIKEY === 'string' && body.WPUSH_APIKEY.trim().length > 0)
+          ? body.WPUSH_APIKEY.trim()
+          : config.WPUSH_APIKEY,
+        WPUSH_CHANNEL: body.WPUSH_CHANNEL || config.WPUSH_CHANNEL,
+        WPUSH_TOPIC_CODE: body.WPUSH_TOPIC_CODE || config.WPUSH_TOPIC_CODE
+      };
+      const title = '测试通知';
+      const content = '这是一条测试通知，用于验证 WPUSH 通知功能是否正常工作。\n\n发送时间: ' + formatBeijingTime();
+      success = await sendWPushNotification(title, content, testConfig);
+      message = success ? 'WPUSH 通知发送成功' : 'WPUSH 通知发送失败，请检查配置';
     }
 
     return new Response(

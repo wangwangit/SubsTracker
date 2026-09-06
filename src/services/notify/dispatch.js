@@ -19,6 +19,7 @@ import { gotifyChannel } from './gotify.js';
 import { serverChanChannel } from './serverchan.js';
 import { pushplusChannel } from './pushplus.js';
 import { ntfyChannel } from './ntfy.js';
+import { wpushChannel } from './wpush.js';
 import { writeLog } from '../../data/notification-logs.repo.js';
 
 /** 名字到渠道实例的映射；新增渠道在此注册即可 */
@@ -32,7 +33,8 @@ export const ALL_CHANNELS = {
   gotify: gotifyChannel,
   serverchan: serverChanChannel,
   pushplus: pushplusChannel,
-  ntfy: ntfyChannel
+  ntfy: ntfyChannel,
+  wpush: wpushChannel
 };
 
 /**

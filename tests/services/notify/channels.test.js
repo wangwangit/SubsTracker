@@ -20,6 +20,7 @@ import { wecomChannel } from '../../../src/services/notify/wechat.js';
 import { gotifyChannel } from '../../../src/services/notify/gotify.js';
 import { serverChanChannel } from '../../../src/services/notify/serverchan.js';
 import { pushplusChannel } from '../../../src/services/notify/pushplus.js';
+import { wpushChannel } from '../../../src/services/notify/wpush.js';
 import { emailChannel } from '../../../src/services/notify/email.js';
 import { webhookChannel } from '../../../src/services/notify/webhook.js';
 import { dispatch, ALL_CHANNELS, testChannel } from '../../../src/services/notify/dispatch.js';
@@ -317,9 +318,9 @@ describe('testChannel', () => {
 });
 
 describe('注册表完整性', () => {
-  it('ALL_CHANNELS 包含 10 个渠道', () => {
+  it('ALL_CHANNELS 包含 11 个渠道', () => {
     expect(Object.keys(ALL_CHANNELS).sort()).toEqual(
-      ['bark', 'email', 'gotify', 'notifyx', 'ntfy', 'pushplus', 'serverchan', 'telegram', 'webhook', 'wechatbot'].sort()
+      ['bark', 'email', 'gotify', 'notifyx', 'ntfy', 'pushplus', 'serverchan', 'telegram', 'webhook', 'wechatbot', 'wpush'].sort()
     );
   });
 
@@ -359,5 +360,55 @@ describe('ntfyChannel', () => {
     } finally {
       globalThis.fetch = original;
     }
+  });
+});
+
+describe('wpushChannel', () => {
+  it('validateConfig：缺 apikey 失败', () => {
+    expect(wpushChannel.validateConfig({}).ok).toBe(false);
+    expect(wpushChannel.validateConfig({ WPUSH_APIKEY: '  ' }).ok).toBe(false);
+    expect(wpushChannel.validateConfig({ WPUSH_APIKEY: 'WPUSHkey' }).ok).toBe(true);
+  });
+
+  it('send 成功路径：code===0，可选 channel/topic_code', async () => {
+    const captured = vi.fn();
+    vi.spyOn(globalThis, 'fetch').mockImplementation(async (url, init) => {
+      captured(url, init);
+      return jsonResponse({ code: 0, message: 'ok' });
+    });
+
+    const r = await wpushChannel.send(
+      { title: '标题', content: '正文' },
+      { WPUSH_APIKEY: 'WPUSHsecret', WPUSH_CHANNEL: 'feishu', WPUSH_TOPIC_CODE: 'topic-1' }
+    );
+    expect(r.success).toBe(true);
+    expect(r.channel).toBe('wpush');
+    expect(captured.mock.calls[0][0]).toBe('https://api.wpush.cn/api/v1/send');
+    const body = JSON.parse(captured.mock.calls[0][1].body);
+    expect(body).toEqual({
+      apikey: 'WPUSHsecret',
+      title: '标题',
+      content: '正文',
+      channel: 'feishu',
+      topic_code: 'topic-1'
+    });
+  });
+
+  it('send：code!==0 → 失败，且错误信息不含 apikey', async () => {
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue(
+      jsonResponse({ code: 40001, message: 'invalid key' })
+    );
+    const r = await wpushChannel.send(
+      { title: 'T', content: 'C' },
+      { WPUSH_APIKEY: 'WPUSHshould-not-leak' }
+    );
+    expect(r.success).toBe(false);
+    expect(r.error).toContain('40001');
+    expect(r.error).not.toContain('WPUSHshould-not-leak');
+  });
+
+  it('配置缺失 → 直接失败', async () => {
+    const r = await wpushChannel.send({ title: 'T', content: 'C' }, {});
+    expect(r.success).toBe(false);
   });
 });
